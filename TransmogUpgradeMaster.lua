@@ -100,7 +100,7 @@ function TUM:InitItemSourceMap()
     local categoryIndex = 1
     local numCategories = #categories
     local ticker;
-    ticker = C_Timer.NewTicker(0, function()
+    ticker = C_Timer.NewTicker(1.5, function()
         for _, info in pairs(C_TransmogCollection.GetCategoryAppearances(categories[categoryIndex])) do
             local appearanceSources = C_TransmogCollection.GetAppearanceSources(info.visualID)
             if appearanceSources then
