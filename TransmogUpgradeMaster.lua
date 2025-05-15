@@ -30,6 +30,19 @@ local UPGRADE_MARKUP = CreateAtlasMarkup('CovenantSanctum-Upgrade-Icon-Available
 local OK_MARKUP = "|TInterface\\RaidFrame\\ReadyCheck-Ready:0|t"
 local NOK_MARKUP = "|TInterface\\RaidFrame\\ReadyCheck-NotReady:0|t"
 
+local catalystSlots = {
+    [Enum.InventoryType.IndexHeadType] = true,
+    [Enum.InventoryType.IndexShoulderType] = true,
+    [Enum.InventoryType.IndexChestType] = true,
+    [Enum.InventoryType.IndexWaistType] = true,
+    [Enum.InventoryType.IndexLegsType] = true,
+    [Enum.InventoryType.IndexFeetType] = true,
+    [Enum.InventoryType.IndexWristType] = true,
+    [Enum.InventoryType.IndexHandType] = true,
+    [Enum.InventoryType.IndexCloakType] = true,
+    [Enum.InventoryType.IndexRobeType] = true,
+}
+
 local playerClassID = select(3, UnitClass("player"))
 
 TUM.currentSeason = 14; -- TWW S2
@@ -228,12 +241,7 @@ function TUM:GetSourceIDsForItemID(itemID)
 end
 
 function TUM:IsCatalystSlot(slot)
-    local playerSets = TUM:GetSetsForClass(playerClassID)
-    if not playerSets then
-        return false
-    end
-
-    return not not C_TransmogSets.GetSourcesForSlot(playerSets[1], slot)
+    return catalystSlots[slot] or false
 end
 
 function TUM:IsSetItemCollected(transmogSetID, slot)
