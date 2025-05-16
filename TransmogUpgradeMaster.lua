@@ -40,7 +40,6 @@ local catalystSlots = {
     [Enum.InventoryType.IndexWristType] = true,
     [Enum.InventoryType.IndexHandType] = true,
     [Enum.InventoryType.IndexCloakType] = true,
-    [Enum.InventoryType.IndexRobeType] = true,
 }
 
 local playerClassID = select(3, UnitClass("player"))
@@ -68,7 +67,8 @@ TUM.sets = {
 }
 
 EventUtil.ContinueOnAddOnLoaded(name, function()
-    TUM.currentSeason = C_MythicPlus.GetCurrentSeason() or 14
+    local currentSeason = C_MythicPlus.GetCurrentSeason()
+    TUM.currentSeason = (currentSeason and currentSeason > 0) and currentSeason or 14
 
     TUM:InitItemSourceMap()
 
@@ -186,6 +186,10 @@ function TUM:HandleTooltip(tooltip)
     if currentTier == 0 then return end
 
     local itemSlot = C_Item.GetItemInventoryTypeByID(itemLink)
+    if itemSlot == Enum.InventoryType.IndexRobeType then
+        -- robes catalyse into chest pieces
+        itemSlot = Enum.InventoryType.IndexChestType
+    end
 
     local _, sourceID = C_TransmogCollection.GetItemInfo(itemID)
 
@@ -216,6 +220,8 @@ function TUM:HandleTooltip(tooltip)
                 local nextIsCollected = self:IsSetItemCollected(playerSets[currentTier + 1], itemSlot)
                 self:AddTooltipLine(tooltip, CATALYST_MARKUP .. " Catalyst & " .. UPGRADE_MARKUP .. " Upgrade appearance", nextIsCollected)
             end
+        else
+            -- todo: add a 1-time error message that set info for current season+class couldn't be found
         end
     end
     if isCatalystSlot and relatedSets and canUpgradeToNextBreakpoint then
