@@ -265,9 +265,10 @@ end
 --- @param itemLink string
 --- @return boolean
 function TUM:IsValidArmorTypeForPlayer(itemLink)
-    local itemClassID, itemSubClassID = select(6, C_Item.GetItemInfoInstant(itemLink))
+    local invType, _, itemClassID, itemSubClassID = select(4, C_Item.GetItemInfoInstant(itemLink))
 
-    return itemClassID == Enum.ItemClass.Armor and itemSubClassID == classArmorTypeMap[playerClassID]
+    return invType == "INVTYPE_CLOAK"
+        or (itemClassID == Enum.ItemClass.Armor and itemSubClassID == classArmorTypeMap[playerClassID])
 end
 
 function TUM:IsCatalystSlot(slot)
