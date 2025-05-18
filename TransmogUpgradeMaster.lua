@@ -24,6 +24,25 @@ local ITEM_MOD_ID_TIERS = {
     [1] = TIER_HEROIC,
     [3] = TIER_MYTHIC,
 }
+local CLOTH = Enum.ItemArmorSubclass.Cloth
+local LEATHER = Enum.ItemArmorSubclass.Leather
+local MAIL = Enum.ItemArmorSubclass.Mail
+local PLATE = Enum.ItemArmorSubclass.Plate
+local classArmorTypeMap = {
+    [1] = PLATE, -- WARRIOR
+    [2] = PLATE, -- PALADIN
+    [3] = MAIL, -- HUNTER
+    [4] = LEATHER, -- ROGUE
+    [5] = CLOTH, -- PRIEST
+    [6] = PLATE, -- DEATHKNIGHT
+    [7] = MAIL, -- SHAMAN
+    [8] = CLOTH, -- MAGE
+    [9] = CLOTH, -- WARLOCK
+    [10] = LEATHER, -- MONK
+    [11] = LEATHER, -- DRUID
+    [12] = LEATHER, -- DEMONHUNTER
+    [13] = MAIL, -- EVOKER
+}
 local ITEM_UPGRADE_TOOLTIP_PATTERN = ITEM_UPGRADE_TOOLTIP_FORMAT_STRING:gsub('%%d', '(%%d+)'):gsub('%%s', '(.-)');
 local CATALYST_MARKUP = CreateAtlasMarkup('CreationCatalyst-32x32', 18, 18)
 local UPGRADE_MARKUP = CreateAtlasMarkup('CovenantSanctum-Upgrade-Icon-Available', 18, 18)
@@ -87,20 +106,17 @@ function TUM:GetSetsForClass(classID)
 end
 
 --- @param classMask number
---- @return string[] classList
 --- @return number[] classIDList
 function TUM:ConvertClassMaskToClassList(classMask)
-	local classList, classIDList = {}, {};
+	local classIDList = {};
 	for classID = 1, GetNumClasses() do
 		local classAllowed = FlagsUtil.IsSet(classMask, bit.lshift(1, (classID - 1)));
-		local allowedClassInfo = classAllowed and C_CreatureInfo.GetClassInfo(classID);
-		if allowedClassInfo then
-			table.insert(classList, allowedClassInfo.className);
+		if classAllowed then
 			table.insert(classIDList, classID);
 		end
 	end
 
-	return classList, classIDList;
+	return classIDList;
 end
 
 function TUM:InitItemSourceMap()
@@ -200,7 +216,7 @@ function TUM:HandleTooltip(tooltip)
         for _, setID in ipairs(setIDs) do
             local setInfo = C_TransmogSets.GetSetInfo(setID)
 
-            local _, classIDList = self:ConvertClassMaskToClassList(setInfo.classMask)
+            local classIDList = self:ConvertClassMaskToClassList(setInfo.classMask)
 
             local classSets = self:GetSetsForClass(classIDList[1])
             if classSets and tIndexOf(classSets, setID) then
@@ -210,8 +226,8 @@ function TUM:HandleTooltip(tooltip)
         end
     end
 
-    local isCatalystSlot = self:IsCatalystSlot(itemSlot)
-    if isCatalystSlot and setClassID ~= playerClassID then
+    local canCatalyse = self:IsCatalystSlot(itemSlot) and self:IsValidArmorTypeForPlayer(itemLink)
+    if canCatalyse and setClassID ~= playerClassID then
         local playerSets = self:GetSetsForClass(playerClassID)
         if playerSets then
             local currentIsCollected = self:IsSetItemCollected(playerSets[currentTier], itemSlot)
@@ -224,7 +240,7 @@ function TUM:HandleTooltip(tooltip)
             -- todo: add a 1-time error message that set info for current season+class couldn't be found
         end
     end
-    if isCatalystSlot and relatedSets and canUpgradeToNextBreakpoint then
+    if canCatalyse and relatedSets and canUpgradeToNextBreakpoint then
         local nextSetID = relatedSets[currentTier + 1]
         if nextSetID then
             local isCollected = self:IsSetItemCollected(nextSetID, itemSlot)
@@ -244,6 +260,14 @@ end
 
 function TUM:GetSourceIDsForItemID(itemID)
     return self.itemSourceIDs[itemID]
+end
+
+--- @param itemLink string
+--- @return boolean
+function TUM:IsValidArmorTypeForPlayer(itemLink)
+    local itemClassID, itemSubClassID = select(6, C_Item.GetItemInfoInstant(itemLink))
+
+    return itemClassID == Enum.ItemClass.Armor and itemSubClassID == classArmorTypeMap[playerClassID]
 end
 
 function TUM:IsCatalystSlot(slot)
