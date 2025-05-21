@@ -122,31 +122,38 @@ end
 function TUM:InitItemSourceMap()
     local itemSourceIDs = {}
     TUM.itemSourceIDs = itemSourceIDs
-    local categories = {}
-    for _, category in pairs(Enum.TransmogCollectionType) do
-        table.insert(categories, category)
-    end
-    local categoryIndex = 1
-    local numCategories = #categories
-    local ticker;
-    ticker = C_Timer.NewTicker(1.5, function()
-        for _, info in pairs(C_TransmogCollection.GetCategoryAppearances(categories[categoryIndex])) do
-            local appearanceSources = C_TransmogCollection.GetAppearanceSources(info.visualID)
-            if appearanceSources then
-                for _, sourceInfo in ipairs(appearanceSources) do
-                    local tier = ITEM_MOD_ID_TIERS[sourceInfo.itemModID] or nil
-                    if tier then
-                        itemSourceIDs[sourceInfo.itemID] = itemSourceIDs[sourceInfo.itemID] or {}
-                        itemSourceIDs[sourceInfo.itemID][tier] = sourceInfo.sourceID
+    local finished = false
+    local msPerBatch = 10
+    local function iterateAppearances()
+        local start = debugprofilestop()
+        for _, category in pairs(Enum.TransmogCollectionType) do
+            for _, info in pairs(C_TransmogCollection.GetCategoryAppearances(category)) do
+                local appearanceSources = C_TransmogCollection.GetAppearanceSources(info.visualID)
+                if appearanceSources then
+                    for _, sourceInfo in ipairs(appearanceSources) do
+                        local tier = ITEM_MOD_ID_TIERS[sourceInfo.itemModID] or nil
+                        if tier then
+                            itemSourceIDs[sourceInfo.itemID] = itemSourceIDs[sourceInfo.itemID] or {}
+                            itemSourceIDs[sourceInfo.itemID][tier] = sourceInfo.sourceID
+                        end
                     end
+                end
+                if debugprofilestop() - start > msPerBatch then
+                    coroutine.yield()
+                    start = debugprofilestop()
                 end
             end
         end
-        categoryIndex = categoryIndex + 1
-        if categoryIndex > numCategories then
+        finished = true
+    end
+    local resumeFunc = coroutine.wrap(iterateAppearances)
+    local ticker
+    ticker = C_Timer.NewTicker(0, function()
+        if finished then
             ticker:Cancel()
-            ticker = nil
+            return
         end
+        resumeFunc()
     end)
 end
 
