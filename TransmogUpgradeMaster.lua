@@ -89,7 +89,9 @@ EventUtil.ContinueOnAddOnLoaded(name, function()
     local currentSeason = C_MythicPlus.GetCurrentSeason()
     TUM.currentSeason = (currentSeason and currentSeason > 0) and currentSeason or 14
 
-    TUM:InitItemSourceMap()
+    RunNextFrame(function()
+        TUM:InitItemSourceMap()
+    end)
 
     --- @param tooltip GameTooltip
     TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip)
@@ -148,7 +150,7 @@ function TUM:InitItemSourceMap()
     end
     local resumeFunc = coroutine.wrap(iterateAppearances)
     local ticker
-    ticker = C_Timer.NewTicker(0, function()
+    ticker = C_Timer.NewTicker(1, function()
         if finished then
             ticker:Cancel()
             return
