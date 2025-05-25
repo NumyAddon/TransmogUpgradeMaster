@@ -123,13 +123,21 @@ end
 
 function TUM:InitItemSourceMap()
     local itemSourceIDs = {}
-    TUM.itemSourceIDs = itemSourceIDs
-    local finished = false
-    local msPerBatch = 10
+    self.itemSourceMapInitialized = false
+    self.itemSourceMapProgress = 0
+    self.itemSourceMapTotal = 0
+    self.itemSourceIDs = itemSourceIDs
+    --- @type table<number, TransmogCategoryAppearanceInfo[]>
+    local categoryAppearances = {}
+    for _, category in pairs(Enum.TransmogCollectionType) do
+        categoryAppearances[category] = C_TransmogCollection.GetCategoryAppearances(category)
+        self.itemSourceMapTotal = self.itemSourceMapTotal + #categoryAppearances[category]
+    end
+    local msPerBatch = 20
     local function iterateAppearances()
         local start = debugprofilestop()
-        for _, category in pairs(Enum.TransmogCollectionType) do
-            for _, info in pairs(C_TransmogCollection.GetCategoryAppearances(category)) do
+        for _, appearances in pairs(categoryAppearances) do
+            for _, info in pairs(appearances) do
                 local appearanceSources = C_TransmogCollection.GetAppearanceSources(info.visualID)
                 if appearanceSources then
                     for _, sourceInfo in ipairs(appearanceSources) do
@@ -140,18 +148,19 @@ function TUM:InitItemSourceMap()
                         end
                     end
                 end
+                self.itemSourceMapProgress = self.itemSourceMapProgress + 1
                 if debugprofilestop() - start > msPerBatch then
                     coroutine.yield()
                     start = debugprofilestop()
                 end
             end
         end
-        finished = true
+        self.itemSourceMapInitialized = true
     end
     local resumeFunc = coroutine.wrap(iterateAppearances)
     local ticker
     ticker = C_Timer.NewTicker(1, function()
-        if finished then
+        if self.itemSourceMapInitialized then
             ticker:Cancel()
             return
         end
@@ -263,6 +272,10 @@ function TUM:HandleTooltip(tooltip)
                 local isCollected = nextSourceInfo and nextSourceInfo.isCollected
                 self:AddTooltipLine(tooltip, UPGRADE_MARKUP .. " Upgrade appearance", isCollected)
             end
+        elseif not self.itemSourceMapInitialized then
+            local progress = self.itemSourceMapProgress / self.itemSourceMapTotal * 100
+            local text = string.format("TransmogUpgradeMaster is loading (%.0f%%)", progress)
+            tooltip:AddLine(text, nil, nil, nil, true)
         end
     end
 end
