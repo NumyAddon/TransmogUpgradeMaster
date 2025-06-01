@@ -205,6 +205,7 @@ function TUM:HandleTooltip(tooltip)
 
     local itemID = tonumber(itemLink:match("item:(%d+)"))
     if not itemID or not C_Item.IsDressableItemByID(itemID) then return end
+    self:AddDebugLine(tooltip, 'itemID: ' .. tostring(itemID))
 
     local upgradeInfo = C_Item.GetItemUpgradeInfo(itemLink)
     if not upgradeInfo or not self:IsCurrentSeasonItem(itemLink) then
@@ -224,6 +225,7 @@ function TUM:HandleTooltip(tooltip)
         end
     end
     if currentTier == 0 then return end
+    self:AddDebugLine(tooltip, 'currentTier: ' .. tostring(currentTier))
 
     local itemSlot = C_Item.GetItemInventoryTypeByID(itemLink)
     if itemSlot == Enum.InventoryType.IndexRobeType then
@@ -250,7 +252,9 @@ function TUM:HandleTooltip(tooltip)
         end
     end
 
-    local canCatalyse = self:IsCatalystSlot(itemSlot) and not self:IsItemCatalysed(itemID) and self:IsValidArmorTypeForPlayer(itemLink)
+    local isCatalysed = self:IsItemCatalysed(itemID)
+    self:AddDebugLine(tooltip, 'isCatalysed: ' .. tostring(isCatalysed))
+    local canCatalyse = not isCatalysed and self:IsCatalystSlot(itemSlot) and self:IsValidArmorTypeForPlayer(itemLink)
     if canCatalyse then
         local playerSets = self:GetSetsForClass(playerClassID)
         if playerSets then
@@ -267,7 +271,7 @@ function TUM:HandleTooltip(tooltip)
     else
         self:AddDebugLine(tooltip, 'not catalysable or already catalysed')
     end
-    if canCatalyse and relatedSets and canUpgradeToNextBreakpoint then
+    if isCatalysed and relatedSets and canUpgradeToNextBreakpoint then
         local nextSetID = relatedSets[currentTier + 1]
         if nextSetID then
             local isCollected = self:IsSetItemCollected(nextSetID, itemSlot)
