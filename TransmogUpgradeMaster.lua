@@ -4,10 +4,10 @@ local name, ns = ...
 local TUM = {}
 TransmogUpgradeMaster = TUM
 
-TUM.debug = false
-
 --- @type TransmogUpgradeMasterData
 TUM.data = ns.data
+--- @type TransmogUpgradeMasterConfig
+TUM.Config = ns.Config
 
 local TIER_LFR = 1
 local TIER_NORMAL = 2
@@ -78,6 +78,7 @@ do
 end
 
 EventUtil.ContinueOnAddOnLoaded(name, function()
+    TUM.db = TUM.Config:Init()
     local currentSeason = C_MythicPlus.GetCurrentSeason()
     TUM.currentSeason = (currentSeason and currentSeason > 0) and currentSeason or 14
 
@@ -181,10 +182,26 @@ function TUM:IsCurrentSeasonItem(itemLink)
     return false
 end
 
+local modifierFunctions = {
+    [TUM.Config.modifierKeyOptions.always] = function() return true end,
+    [TUM.Config.modifierKeyOptions.shift] = IsShiftKeyDown,
+    [TUM.Config.modifierKeyOptions.ctrl] = IsControlKeyDown,
+    [TUM.Config.modifierKeyOptions.alt] = IsAltKeyDown,
+    [TUM.Config.modifierKeyOptions.never] = function() return false end,
+}
+
 --- @param tooltip GameTooltip
 --- @param text string
 --- @param isCollected boolean
 function TUM:AddTooltipLine(tooltip, text, isCollected)
+    local modifierSetting = isCollected
+        and self.db.showCollectedModifierKey
+        or self.db.showUncollectedModifierKey
+    local modifierFunction = modifierFunctions[modifierSetting]
+    if not modifierFunction or not modifierFunction() then
+        return
+    end
+
     local ok = OK_MARKUP .. GREEN_FONT_COLOR:WrapTextInColorCode(' Collected ') .. OK_MARKUP
     local nok = NOK_MARKUP .. RED_FONT_COLOR:WrapTextInColorCode(' Not Collected ') .. NOK_MARKUP
     tooltip:AddDoubleLine(text, isCollected and ok or nok)
@@ -193,7 +210,7 @@ end
 --- @param tooltip GameTooltip
 --- @param text string
 function TUM:AddDebugLine(tooltip, text)
-    if not self.debug then return end
+    if not self.db.debug then return end
 
     tooltip:AddDoubleLine('<TUM Debug>', text, 1, 0.5, 0, 1, 1, 1)
 end

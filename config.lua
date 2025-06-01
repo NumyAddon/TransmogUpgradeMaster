@@ -1,0 +1,157 @@
+local name, ns = ...;
+
+--- @class TransmogUpgradeMasterConfig
+local Config = {}
+ns.Config = Config;
+
+local WARBAND_INFO_IMPLEMENTED = false;
+
+Config.modifierKeyOptions = {
+    always = "always",
+    shift = "shift",
+    ctrl = "ctrl",
+    alt = "alt",
+    never = "never",
+};
+
+Config.settingKeys = {
+    hideWhenCollected = "hideWhenCollected",
+    showCollectedModifierKey = "showCollectedModifierKey",
+    showUncollectedModifierKey = "showUncollectedModifierKey",
+    showWarbandCatalystInfo = "showWarbandCatalystInfo",
+    showClassCatalystInfoPrefix = "showClassCatalystInfo_",
+    debug = "debug",
+};
+
+function Config:Init()
+    TransmogUpgradeMasterDB = TransmogUpgradeMasterDB or {};
+    self.db = TransmogUpgradeMasterDB;
+    local defaults = {
+        [self.settingKeys.hideWhenCollected] = false,
+        [self.settingKeys.debug] = false,
+        [self.settingKeys.showCollectedModifierKey] = self.modifierKeyOptions.always,
+        [self.settingKeys.showUncollectedModifierKey] = self.modifierKeyOptions.always,
+        [self.settingKeys.showWarbandCatalystInfo] = self.modifierKeyOptions.shift,
+    };
+    for classID = 1, GetNumClasses() do
+        defaults[self.settingKeys.showClassCatalystInfoPrefix .. classID] = true;
+    end
+    for k, v in pairs(defaults) do
+        if self.db[k] == nil then
+            self.db[k] = v;
+        end
+    end
+
+    local category, layout = Settings.RegisterVerticalLayoutCategory("Transmog Upgrade Master");
+
+    local showModifierOptions = {
+        { text = "Always", label = "Always", tooltip = "Always show.", value = self.modifierKeyOptions.always },
+        { text = "Shift", label = "While holding SHIFT", tooltip = "Only while holding Shift.", value = self.modifierKeyOptions.shift },
+        { text = "Ctrl", label = "While holding CTRL", tooltip = "Only while holding Ctrl.", value = self.modifierKeyOptions.ctrl },
+        { text = "Alt", label = "While holding ALT", tooltip = "Only while holding Alt.", value = self.modifierKeyOptions.alt },
+        { text = "Never", label = "Never", tooltip = "Never show.", value = self.modifierKeyOptions.never },
+    };
+
+    layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(
+        "Display Transmog Collection Status in Tooltip",
+        "Show whether you have collected an Upgraded or Catalysed appearance in the tooltip."
+    ));
+    self:MakeDropdown(
+        category,
+        "Show Collected TMog in Tooltip",
+        self.settingKeys.showCollectedModifierKey,
+        defaults.showCollectedModifierKey,
+        "When to display the Upgrade and Catalyst information for collected appearances.",
+        showModifierOptions,
+        Settings.VarType.String
+    );
+    self:MakeDropdown(
+        category,
+        "Show Uncollected TMog in Tooltip",
+        self.settingKeys.showUncollectedModifierKey,
+        defaults.showUncollectedModifierKey,
+        "When to display the Upgrade and Catalyst information for uncollected appearances.",
+        showModifierOptions,
+        Settings.VarType.String
+    );
+    if WARBAND_INFO_IMPLEMENTED then
+        layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(
+            "Warband Catalyst Info",
+            "For warbound or BoE items, you can show the classes for which you can get an appearance by catalysing (and upgrading) the item."
+        ));
+        self:MakeDropdown(
+            category,
+            "Show Warband Catalyst Info",
+            self.settingKeys.showWarbandCatalystInfo,
+            defaults.showWarbandCatalystInfo,
+            "When to display the Warband Catalyst information in the tooltip.",
+            showModifierOptions,
+            Settings.VarType.String
+        );
+        do
+            for classID = 1, GetNumClasses() do
+                local className, classFile = GetClassInfo(classID);
+                local classColor = RAID_CLASS_COLORS[classFile];
+                local label = "Show " .. classColor:WrapTextInColorCode(className);
+                self:MakeCheckbox(
+                    category,
+                    label,
+                    self.settingKeys.showClassCatalystInfoPrefix .. classID,
+                    defaults[self.settingKeys.showClassCatalystInfoPrefix .. classID],
+                    "If checked, the tooltip will show the Catalyst information for " .. classColor:WrapTextInColorCode(className) .. " for warbound or BoE items."
+                );
+            end
+        end
+    end
+    layout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Other Settings"));
+    self:MakeCheckbox(
+        category,
+        "Debug Tooltip Info",
+        self.settingKeys.debug,
+        defaults.debug,
+        "If Checked, debug info will be shown in the tooltip."
+    );
+
+    Settings.RegisterAddOnCategory(category)
+
+    SLASH_TRANSMOG_UPGRADE_MASTER1 = "/tum";
+    SLASH_TRANSMOG_UPGRADE_MASTER2 = "/transmogupgrademaster";
+    SlashCmdList["TRANSMOG_UPGRADE_MASTER"] = function()
+        Settings.OpenToCategory(category:GetID());
+    end
+
+    return self.db;
+end
+
+local settingPrefix = name .. "_";
+
+function Config:MakeCheckbox(category, label, settingKey, defaultValue, tooltip)
+    local variable = settingPrefix .. settingKey;
+
+    local setting = Settings.RegisterAddOnSetting(category, variable, settingKey, self.db, Settings.VarType.Boolean, label, defaultValue);
+    setting:SetValueChangedCallback(function(setting, value) self:OnSettingChange(setting:GetVariable(), value) end);
+
+    Settings.CreateCheckbox(category, setting, tooltip);
+end
+
+--- @alias TUMDropDownOptions { text: string, label: string, tooltip: string, value: any }[]
+
+--- @param options TUMDropDownOptions|fun(): TUMDropDownOptions
+--- @param varType "string"|"number"|"boolean" # one of Settings.VarType
+function Config:MakeDropdown(category, label, settingKey, defaultValue, tooltip, options, varType)
+    local variable = settingPrefix .. settingKey;
+
+    local GetOptions = options;
+    if type(options) == "table" then
+        GetOptions = function() return options; end
+    end
+
+    local setting = Settings.RegisterAddOnSetting(category, variable, settingKey, self.db, varType, label, defaultValue);
+    setting:SetValueChangedCallback(function(setting, value) self:OnSettingChange(setting:GetVariable(), value) end);
+
+    Settings.CreateDropdown(category, setting, GetOptions, tooltip);
+end
+
+function Config:OnSettingChange(setting, value)
+    -- nothing so far
+end
