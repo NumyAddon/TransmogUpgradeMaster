@@ -18,4 +18,5 @@
 ## Category-zhCN: 战团藏品
 ## Category-zhTW: 戰隊收藏
 
+data.lua
 TransmogUpgradeMaster.lua
