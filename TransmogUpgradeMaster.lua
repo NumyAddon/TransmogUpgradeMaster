@@ -3,6 +3,9 @@ local name, ns = ...
 --- @class TransmogUpgradeMaster
 local TUM = {}
 TransmogUpgradeMaster = TUM
+--@debug@
+_G.TUM = TUM
+--@end-debug@
 
 --- @type TransmogUpgradeMasterData
 TUM.data = ns.data
@@ -68,9 +71,9 @@ local catalystSlots = {
 
 local playerClassID = select(3, UnitClass("player"))
 
-TUM.currentSeason = 14; -- TWW S2
 
 do
+    TUM.currentSeason = TUM.data.currentSeason;
     TUM.sets = TUM.data.sets;
     TUM.setSourceIDs = TUM.data.setSourceIDs;
     TUM.catalystItems = TUM.data.catalystItems;
@@ -80,7 +83,7 @@ end
 EventUtil.ContinueOnAddOnLoaded(name, function()
     TUM.db = TUM.Config:Init()
     local currentSeason = C_MythicPlus.GetCurrentSeason()
-    TUM.currentSeason = (currentSeason and currentSeason > 0) and currentSeason or 14
+    TUM.currentSeason = (currentSeason and currentSeason > 0) and currentSeason or TUM.data.currentSeason
 
     RunNextFrame(function()
         TUM:InitItemSourceMap()
@@ -95,9 +98,10 @@ EventUtil.ContinueOnAddOnLoaded(name, function()
 end)
 
 ---@param classID number
+---@param seasonID number?
 ---@return nil | { [1]: number, [2]: number, [3]: number, [4]: number } # lfrSetID, normalSetID, heroicSetID, mythicSetID
-function TUM:GetSetsForClass(classID)
-    return self.sets[self.currentSeason] and self.sets[self.currentSeason][classID] or nil;
+function TUM:GetSetsForClass(classID, seasonID)
+    return self.sets[seasonID or self.currentSeason] and self.sets[seasonID or self.currentSeason][classID] or nil;
 end
 
 --- @param classMask number
@@ -159,6 +163,21 @@ function TUM:InitItemSourceMap()
         end
         resumeFunc()
     end)
+end
+
+local BONUS_ID_OFFSET = 13;
+function TUM:GetItemSeason(itemLink)
+    local _, data = LinkUtil.ExtractLink(itemLink);
+    local parts = strsplittable(':', data);
+    local numBonusIDs = tonumber(parts[BONUS_ID_OFFSET]) or 0;
+    for index = (BONUS_ID_OFFSET + 1), (BONUS_ID_OFFSET + numBonusIDs) do
+        local bonusID = tonumber(parts[index]);
+        if self.data.catalystBonusIDMap[bonusID] then
+            return self.data.catalystBonusIDMap[bonusID];
+        end
+    end
+
+    return nil;
 end
 
 --- previous season items are not (yet?) supported
@@ -225,10 +244,13 @@ function TUM:HandleTooltip(tooltip)
     self:AddDebugLine(tooltip, 'itemID: ' .. tostring(itemID))
 
     local upgradeInfo = C_Item.GetItemUpgradeInfo(itemLink)
-    if not upgradeInfo or not self:IsCurrentSeasonItem(itemLink) then
-        self:AddDebugLine(tooltip, 'not upgradable current season item')
+    local canUpgrade = upgradeInfo and self:IsCurrentSeasonItem(itemLink)
+    local seasonID = self:GetItemSeason(itemLink)
+    if not upgradeInfo or not seasonID then
+        self:AddDebugLine(tooltip, 'not upgradable or no seasonID')
         return
     end
+    self:AddDebugLine(tooltip, 'seasonID: ' .. tostring(seasonID))
 
     local canUpgradeToNextBreakpoint = false
     local currentTier = 0;
@@ -237,11 +259,22 @@ function TUM:HandleTooltip(tooltip)
         if currentTier and upgradeInfo.currentLevel >= 5 and currentTier < 4 then
             currentTier = currentTier + 1
         end
-        if upgradeInfo.currentLevel < 5 and currentTier < 4 then
+        if canUpgrade and upgradeInfo.currentLevel < 5 and currentTier < 4 then
             canUpgradeToNextBreakpoint = true
         end
     end
-    if currentTier == 0 then return end
+    if currentTier == 0 then
+        local _, sourceID = C_TransmogCollection.GetItemInfo(itemLink)
+        local sourceIDs = self:GetSourceIDsForItemID(itemID)
+        local index = tIndexOf(sourceIDs or {}, sourceID)
+        currentTier = index
+
+        if currentTier == 0 then
+            self:AddDebugLine(tooltip, 'no tier info found')
+
+            return
+        end
+    end
     self:AddDebugLine(tooltip, 'currentTier: ' .. tostring(currentTier))
 
     local itemSlot = C_Item.GetItemInventoryTypeByID(itemLink)
@@ -262,7 +295,7 @@ function TUM:HandleTooltip(tooltip)
 
             local classIDList = self:ConvertClassMaskToClassList(setInfo.classMask)
 
-            local classSets = self:GetSetsForClass(classIDList[1])
+            local classSets = self:GetSetsForClass(classIDList[1], seasonID)
             if classSets and tIndexOf(classSets, setID) then
                 relatedSets = classSets
             end
@@ -273,7 +306,7 @@ function TUM:HandleTooltip(tooltip)
     self:AddDebugLine(tooltip, 'isCatalysed: ' .. tostring(isCatalysed))
     local canCatalyse = not isCatalysed and self:IsCatalystSlot(itemSlot) and self:IsValidArmorTypeForPlayer(itemLink)
     if canCatalyse then
-        local playerSets = self:GetSetsForClass(playerClassID)
+        local playerSets = self:GetSetsForClass(playerClassID, seasonID)
         if playerSets then
             local currentIsCollected = self:IsSetItemCollected(playerSets[currentTier], itemSlot)
             self:AddTooltipLine(tooltip, CATALYST_MARKUP .. " Catalyst appearance", currentIsCollected)
@@ -283,10 +316,16 @@ function TUM:HandleTooltip(tooltip)
                     nextIsCollected)
             end
         else
-            -- todo: add a 1-time error message that set info for current season+class couldn't be found
+            local collected = self:IsCatalystItemCollected(seasonID, playerClassID, itemSlot, currentTier)
+            if collected == nil then
+                TUM:ShowLoadingTooltipIfLoading(tooltip)
+                -- todo: add a 1-time error message that set info for current season+class couldn't be found
+            else
+                self:AddTooltipLine(tooltip, CATALYST_MARKUP .. " Catalyst appearance", collected)
+            end
         end
     else
-        self:AddDebugLine(tooltip, 'not catalysable or already catalysed')
+        self:AddDebugLine(tooltip, 'can\'t catalyse or already catalysed')
     end
     if isCatalysed and relatedSets and canUpgradeToNextBreakpoint then
         local nextSetID = relatedSets[currentTier + 1]
@@ -300,12 +339,17 @@ function TUM:HandleTooltip(tooltip)
             local nextSourceInfo = C_TransmogCollection.GetSourceInfo(sourceIDs[currentTier + 1])
             local isCollected = nextSourceInfo and nextSourceInfo.isCollected
             self:AddTooltipLine(tooltip, UPGRADE_MARKUP .. " Upgrade appearance", isCollected)
-        elseif not self.itemSourceMapInitialized then
-            local progress = self.itemSourceMapProgress / self.itemSourceMapTotal * 100
-            local text = string.format("TransmogUpgradeMaster is loading (%.0f%%)", progress)
-            tooltip:AddLine(text, nil, nil, nil, true)
+        else
+            TUM:ShowLoadingTooltipIfLoading(tooltip)
         end
     end
+end
+
+function TUM:ShowLoadingTooltipIfLoading(tooltip)
+    if self.itemSourceMapInitialized then return end
+    local progress = self.itemSourceMapProgress / self.itemSourceMapTotal * 100
+    local text = string.format("TransmogUpgradeMaster is loading (%.0f%%)", progress)
+    tooltip:AddLine(text, nil, nil, nil, true)
 end
 
 function TUM:GetSourceIDsForItemID(itemID)
@@ -327,6 +371,26 @@ end
 
 function TUM:IsItemCatalysed(itemID)
     return not not self.catalystItemByID[itemID]
+end
+
+--- @param seasonID number
+--- @param slot number # Enum.InventoryType
+--- @param tier number # one of TIER_x constants
+function TUM:IsCatalystItemCollected(seasonID, classID, slot, tier)
+    if not self.catalystItems[seasonID] or not self.catalystItems[seasonID][classID] then
+        return nil
+    end
+    local itemID = self.catalystItems[seasonID][classID][slot]
+    if not itemID then return nil end
+
+    local sourceIDs = self:GetSourceIDsForItemID(itemID)
+    if not sourceIDs or not sourceIDs[tier] then
+        return nil
+    end
+
+    local sourceInfo = C_TransmogCollection.GetSourceInfo(sourceIDs[tier])
+
+    return sourceInfo and sourceInfo.isCollected or false
 end
 
 function TUM:IsSetItemCollected(transmogSetID, slot)
