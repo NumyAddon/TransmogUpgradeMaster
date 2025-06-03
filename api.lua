@@ -1,7 +1,7 @@
 local _, ns = ...
 
 --- @type TransmogUpgradeMaster
-local TUM = ns.TUM
+local TUM = ns.core
 
 --- The function signatures in this file will remain stable, though no guarantees are made.
 --- @class TransmogUpgradeMaster_API
