@@ -294,7 +294,7 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
         local _, sourceID = C_TransmogCollection.GetItemInfo(itemLink)
         local sourceIDs = self:GetSourceIDsForItemID(itemID)
         local index = tIndexOf(sourceIDs or {}, sourceID)
-        currentTier = index
+        currentTier = index or 0
 
         if currentTier == 0 then
             tryInsert(debugLines, 'no tier info found')
