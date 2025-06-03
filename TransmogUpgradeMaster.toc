@@ -22,3 +22,5 @@
 data.lua
 config.lua
 TransmogUpgradeMaster.lua
+
+api.lua

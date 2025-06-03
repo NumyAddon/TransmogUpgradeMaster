@@ -6,6 +6,7 @@ TransmogUpgradeMaster = TUM
 --@debug@
 _G.TUM = TUM
 --@end-debug@
+ns.core = TUM
 
 --- @type TransmogUpgradeMasterData
 TUM.data = ns.data
@@ -167,6 +168,10 @@ end
 
 local BONUS_ID_OFFSET = 13;
 function TUM:GetItemSeason(itemLink)
+    if self:IsCurrentSeasonItem(itemLink) then
+        return self.currentSeason;
+    end
+
     local _, data = LinkUtil.ExtractLink(itemLink);
     local parts = strsplittable(':', data);
     local numBonusIDs = tonumber(parts[BONUS_ID_OFFSET]) or 0;
@@ -234,25 +239,47 @@ function TUM:AddDebugLine(tooltip, text)
     tooltip:AddDoubleLine('<TUM Debug>', text, 1, 0.5, 0, 1, 1, 1)
 end
 
---- @param tooltip GameTooltip
-function TUM:HandleTooltip(tooltip)
-    local itemLink = select(2, TooltipUtil.GetDisplayedItem(tooltip))
-    if not itemLink then return end
+--- @param tbl table?
+---@param value any
+local function tryInsert(tbl, value)
+    if tbl then
+        table.insert(tbl, value)
+    end
+end
+
+--- @param itemLink string
+--- @param classID number? # defaults to the player's class
+--- @param debugLines string[]? # if provided, debug lines will be added to this table
+--- @return boolean? canCatalyse # whether the item can be catalysed; if false, the catalystAppearanceMissing return values will be nil
+--- @return boolean? canUpgrade # whether the item can be upgraded to the next tier; if false, the upgradeAppearanceMissing return values will be nil
+--- @return boolean? catalystAppearanceMissing # true if the item will teach a new appearance when catalysed
+--- @return boolean? catalystUpgradeAppearanceMissing # true if the item will teach a new appearance when catalysed AND upgraded to the next tier
+--- @return boolean? upgradeAppearanceMissing # true if the item will teach a new appearance when upgraded to the next tier
+function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
+    if not C_Item.IsItemDataCachedByID(itemLink) then
+        tryInsert(debugLines, 'item data not cached')
+
+        return nil, nil, nil, nil, nil
+    end
+    local canCatalyse, canUpgradeToNextBreakpoint = false, false
+    local catalystMissing, catalystUpgradeMissing, upgradeMissing = nil, nil, nil
 
     local itemID = tonumber(itemLink:match("item:(%d+)"))
-    if not itemID or not C_Item.IsDressableItemByID(itemID) then return end
-    self:AddDebugLine(tooltip, 'itemID: ' .. tostring(itemID))
+    if not itemID or not C_Item.IsDressableItemByID(itemID) then
+        return canCatalyse, canUpgradeToNextBreakpoint, catalystMissing, catalystUpgradeMissing, upgradeMissing
+    end
+    tryInsert(debugLines, 'itemID: ' .. tostring(itemID))
 
     local upgradeInfo = C_Item.GetItemUpgradeInfo(itemLink)
     local canUpgrade = upgradeInfo and self:IsCurrentSeasonItem(itemLink)
     local seasonID = self:GetItemSeason(itemLink)
+    tryInsert(debugLines, 'seasonID: ' .. tostring(seasonID))
     if not upgradeInfo or not seasonID then
-        self:AddDebugLine(tooltip, 'not upgradable or no seasonID')
-        return
-    end
-    self:AddDebugLine(tooltip, 'seasonID: ' .. tostring(seasonID))
+        tryInsert(debugLines, 'not upgradable or no seasonID')
 
-    local canUpgradeToNextBreakpoint = false
+        return canCatalyse, canUpgradeToNextBreakpoint, catalystMissing, catalystUpgradeMissing, upgradeMissing
+    end
+
     local currentTier = 0;
     if upgradeInfo then
         currentTier = TRACK_STRING_ID_TO_TIERS[upgradeInfo.trackStringID] or 0
@@ -270,12 +297,12 @@ function TUM:HandleTooltip(tooltip)
         currentTier = index
 
         if currentTier == 0 then
-            self:AddDebugLine(tooltip, 'no tier info found')
+            tryInsert(debugLines, 'no tier info found')
 
-            return
+            return canCatalyse, canUpgradeToNextBreakpoint, catalystMissing, catalystUpgradeMissing, upgradeMissing
         end
     end
-    self:AddDebugLine(tooltip, 'currentTier: ' .. tostring(currentTier))
+    tryInsert(debugLines, 'currentTier: ' .. tostring(currentTier))
 
     local itemSlot = C_Item.GetItemInventoryTypeByID(itemLink)
     if itemSlot == Enum.InventoryType.IndexRobeType then
@@ -284,12 +311,12 @@ function TUM:HandleTooltip(tooltip)
     end
 
     local _, sourceID = C_TransmogCollection.GetItemInfo(itemID)
-    self:AddDebugLine(tooltip, 'sourceID: ' .. tostring(sourceID))
+    tryInsert(debugLines, 'sourceID: ' .. tostring(sourceID))
 
     local setIDs = sourceID and C_TransmogSets.GetSetsContainingSourceID(sourceID)
     local relatedSets
     if setIDs and #setIDs > 0 then
-        self:AddDebugLine(tooltip, 'setIDs: ' .. table.concat(setIDs, ', '))
+        tryInsert(debugLines, 'setIDs: ' .. table.concat(setIDs, ', '))
         for _, setID in ipairs(setIDs) do
             local setInfo = C_TransmogSets.GetSetInfo(setID)
 
@@ -303,53 +330,114 @@ function TUM:HandleTooltip(tooltip)
     end
 
     local isCatalysed = self:IsItemCatalysed(itemID)
-    self:AddDebugLine(tooltip, 'isCatalysed: ' .. tostring(isCatalysed))
-    local canCatalyse = not isCatalysed and self:IsCatalystSlot(itemSlot) and self:IsValidArmorTypeForPlayer(itemLink)
+    tryInsert(debugLines, 'isCatalysed: ' .. tostring(isCatalysed))
+    canCatalyse = not isCatalysed and self:IsCatalystSlot(itemSlot) and self:IsValidArmorTypeForClass(itemLink, classID)
     if canCatalyse then
-        local playerSets = self:GetSetsForClass(playerClassID, seasonID)
+        local playerSets = self:GetSetsForClass(classID, seasonID)
         if playerSets then
-            local currentIsCollected = self:IsSetItemCollected(playerSets[currentTier], itemSlot)
-            self:AddTooltipLine(tooltip, CATALYST_MARKUP .. " Catalyst appearance", currentIsCollected)
+            catalystMissing = not self:IsSetItemCollected(playerSets[currentTier], itemSlot)
             if canUpgradeToNextBreakpoint then
-                local nextIsCollected = self:IsSetItemCollected(playerSets[currentTier + 1], itemSlot)
-                self:AddTooltipLine(tooltip, CATALYST_MARKUP .. " Catalyst & " .. UPGRADE_MARKUP .. " Upgrade appearance",
-                    nextIsCollected)
+                catalystUpgradeMissing = not self:IsSetItemCollected(playerSets[currentTier + 1], itemSlot)
             end
         else
-            local collected = self:IsCatalystItemCollected(seasonID, playerClassID, itemSlot, currentTier)
-            if collected == nil then
-                TUM:ShowLoadingTooltipIfLoading(tooltip)
-                -- todo: add a 1-time error message that set info for current season+class couldn't be found
-            else
-                self:AddTooltipLine(tooltip, CATALYST_MARKUP .. " Catalyst appearance", collected)
+            catalystMissing = not self:IsCatalystItemCollected(seasonID, classID, itemSlot, currentTier)
+            if canUpgradeToNextBreakpoint then
+                catalystUpgradeMissing = not self:IsCatalystItemCollected(seasonID, classID, itemSlot, currentTier + 1)
             end
         end
     else
-        self:AddDebugLine(tooltip, 'can\'t catalyse or already catalysed')
+        tryInsert(debugLines, 'can\'t catalyse or already catalysed')
     end
     if isCatalysed and relatedSets and canUpgradeToNextBreakpoint then
         local nextSetID = relatedSets[currentTier + 1]
         if nextSetID then
-            local isCollected = self:IsSetItemCollected(nextSetID, itemSlot)
-            self:AddTooltipLine(tooltip, UPGRADE_MARKUP .. " Upgrade appearance", isCollected)
+            upgradeMissing = not self:IsSetItemCollected(nextSetID, itemSlot)
         end
     elseif canUpgradeToNextBreakpoint then
         local sourceIDs = self:GetSourceIDsForItemID(itemID)
         if sourceIDs and sourceIDs[currentTier + 1] then
             local nextSourceInfo = C_TransmogCollection.GetSourceInfo(sourceIDs[currentTier + 1])
-            local isCollected = nextSourceInfo and nextSourceInfo.isCollected
-            self:AddTooltipLine(tooltip, UPGRADE_MARKUP .. " Upgrade appearance", isCollected)
+            upgradeMissing = not nextSourceInfo or not nextSourceInfo.isCollected
+        end
+    end
+
+    if self:IsCacheWarmedUp() then
+        if canCatalyse then
+            catalystMissing = catalystMissing or false
+            if canUpgradeToNextBreakpoint then
+                catalystUpgradeMissing = catalystUpgradeMissing or false
+            end
+        end
+        if canUpgradeToNextBreakpoint then
+            upgradeMissing = upgradeMissing or false
+        end
+    end
+
+    return canCatalyse, canUpgradeToNextBreakpoint, catalystMissing, catalystUpgradeMissing, upgradeMissing
+end
+
+--- @param tooltip GameTooltip
+function TUM:HandleTooltip(tooltip)
+    local itemLink = select(2, TooltipUtil.GetDisplayedItem(tooltip))
+    if not itemLink then return end
+
+    local debugLines = {}
+    local canCatalyse, canUpgrade,
+        catalystMissing, catalystUpgradeMissing, upgradeMissing = self:IsAppearanceMissing(itemLink, nil, debugLines)
+
+    for _, line in ipairs(debugLines) do
+        self:AddDebugLine(tooltip, line)
+    end
+
+    if not canCatalyse and not canUpgrade then
+        return
+    end
+
+    local loadingTooltipShown = false
+    if canCatalyse then
+        if catalystMissing == nil then
+            if not loadingTooltipShown then loadingTooltipShown = self:ShowLoadingTooltipIfLoading(tooltip) end
         else
-            TUM:ShowLoadingTooltipIfLoading(tooltip)
+            self:AddTooltipLine(tooltip, CATALYST_MARKUP .. ' Catalyst appearance', not catalystMissing)
+        end
+        if canUpgrade then
+            if catalystUpgradeMissing == nil then
+                if not loadingTooltipShown then loadingTooltipShown = self:ShowLoadingTooltipIfLoading(tooltip) end
+            else
+                self:AddTooltipLine(
+                    tooltip,
+                    CATALYST_MARKUP .. ' Catalyst & ' .. UPGRADE_MARKUP .. ' Upgrade appearance',
+                    not catalystUpgradeMissing
+                )
+            end
+        end
+    end
+    if canUpgrade then
+        if upgradeMissing == nil then
+            if not loadingTooltipShown then loadingTooltipShown = self:ShowLoadingTooltipIfLoading(tooltip) end
+        else
+            self:AddTooltipLine(tooltip, UPGRADE_MARKUP .. ' Upgrade appearance', not upgradeMissing)
         end
     end
 end
 
+--- @return boolean isCacheWarmedUp
+--- @return number progress # a number between 0 and 1, where 1 means caching has finished
+function TUM:IsCacheWarmedUp()
+    if not self.itemSourceMapInitialized then
+        return false, self.itemSourceMapProgress / self.itemSourceMapTotal
+    end
+    return true, 1
+end
+
+--- @return boolean loading
 function TUM:ShowLoadingTooltipIfLoading(tooltip)
-    if self.itemSourceMapInitialized then return end
-    local progress = self.itemSourceMapProgress / self.itemSourceMapTotal * 100
-    local text = string.format("TransmogUpgradeMaster is loading (%.0f%%)", progress)
+    if self.itemSourceMapInitialized then return false end
+    local _, progress = self:IsCacheWarmedUp()
+    local text = string.format("TransmogUpgradeMaster is loading (%.0f%%)", progress * 100)
     tooltip:AddLine(text, nil, nil, nil, true)
+
+    return true
 end
 
 function TUM:GetSourceIDsForItemID(itemID)
@@ -357,12 +445,13 @@ function TUM:GetSourceIDsForItemID(itemID)
 end
 
 --- @param itemLink string
+--- @param classID number? # defaults to the player's class
 --- @return boolean
-function TUM:IsValidArmorTypeForPlayer(itemLink)
+function TUM:IsValidArmorTypeForClass(itemLink, classID)
     local invType, _, itemClassID, itemSubClassID = select(4, C_Item.GetItemInfoInstant(itemLink))
 
     return invType == "INVTYPE_CLOAK"
-        or (itemClassID == Enum.ItemClass.Armor and itemSubClassID == classArmorTypeMap[playerClassID])
+        or (itemClassID == Enum.ItemClass.Armor and itemSubClassID == classArmorTypeMap[classID or playerClassID])
 end
 
 function TUM:IsCatalystSlot(slot)
