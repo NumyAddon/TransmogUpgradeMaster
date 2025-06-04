@@ -4,11 +4,6 @@ local name, ns = ...;
 local Config = {}
 ns.Config = Config;
 
-local SHOW_WARBAND_INFO_SETTINGS = false;
---@debug@
-SHOW_WARBAND_INFO_SETTINGS = true;
---@end-debug@
-
 Config.modifierKeyOptions = {
     always = "always",
     shift = "shift",
@@ -21,8 +16,8 @@ Config.settingKeys = {
     hideWhenCollected = "hideWhenCollected",
     showCollectedModifierKey = "showCollectedModifierKey",
     showUncollectedModifierKey = "showUncollectedModifierKey",
-    showWarbandCatalystInfo = "showWarbandCatalystInfo",
-    showClassCatalystInfo = "showClassCatalystInfo",
+    showWarbandCatalystInfoModifierKey = "showWarbandCatalystInfoModifierKey",
+    warbandCatalystClassList = "warbandCatalystClassList",
     debug = "debug",
 };
 
@@ -34,8 +29,8 @@ function Config:Init()
         [self.settingKeys.debug] = false,
         [self.settingKeys.showCollectedModifierKey] = self.modifierKeyOptions.always,
         [self.settingKeys.showUncollectedModifierKey] = self.modifierKeyOptions.always,
-        [self.settingKeys.showWarbandCatalystInfo] = self.modifierKeyOptions.shift,
-        [self.settingKeys.showClassCatalystInfo] = {},
+        [self.settingKeys.showWarbandCatalystInfoModifierKey] = self.modifierKeyOptions.shift,
+        [self.settingKeys.warbandCatalystClassList] = {},
     };
     for k, v in pairs(defaults) do
         if self.db[k] == nil then
@@ -43,9 +38,9 @@ function Config:Init()
         end
     end
     for classID = 1, GetNumClasses() do
-        defaults[self.settingKeys.showClassCatalystInfo][classID] = true;
-        if self.db[self.settingKeys.showClassCatalystInfo][classID] == nil then
-            self.db[self.settingKeys.showClassCatalystInfo][classID] = true;
+        defaults[self.settingKeys.warbandCatalystClassList][classID] = true;
+        if self.db[self.settingKeys.warbandCatalystClassList][classID] == nil then
+            self.db[self.settingKeys.warbandCatalystClassList][classID] = true;
         end
     end
 
@@ -81,46 +76,44 @@ function Config:Init()
         showModifierOptions,
         Settings.VarType.String
     );
-    if SHOW_WARBAND_INFO_SETTINGS then
-        layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(
-            "Warband Catalyst Info",
-            "For warbound or BoE items, you can show the classes for which you can get an appearance by catalysing (and upgrading) the item."
-        ));
-        local showWarbandInfo = self:MakeDropdown(
-            category,
-            "Show Warband Catalyst Info",
-            self.settingKeys.showWarbandCatalystInfo,
-            defaults.showWarbandCatalystInfo,
-            "When to display the Warband Catalyst information in the tooltip.",
-            showModifierOptions,
-            Settings.VarType.String
-        );
-        do
-            local expandInitializer, isExpanded = self:MakeExpandableSection("Displayed Classes", 25, 0)
+    layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(
+        "Warband Catalyst Info",
+        "For warbound or BoE items, you can show the classes for which you can get an appearance by catalysing (and upgrading) the item."
+    ));
+    local showWarbandInfo = self:MakeDropdown(
+        category,
+        "Show Warband Catalyst Info",
+        self.settingKeys.showWarbandCatalystInfoModifierKey,
+        defaults.showWarbandCatalystInfoModifierKey,
+        "When to display the Warband Catalyst information in the tooltip.",
+        showModifierOptions,
+        Settings.VarType.String
+    );
+    do
+        local expandInitializer, isExpanded = self:MakeExpandableSection("Displayed Classes", 25, 0)
 
-            local function isVisible()
-                return self.db[self.settingKeys.showWarbandCatalystInfo] ~= self.modifierKeyOptions.never;
-            end
-            expandInitializer:AddShownPredicate(isVisible);
-            layout:AddInitializer(expandInitializer);
+        local function isVisible()
+            return self.db[self.settingKeys.showWarbandCatalystInfoModifierKey] ~= self.modifierKeyOptions.never;
+        end
+        expandInitializer:AddShownPredicate(isVisible);
+        layout:AddInitializer(expandInitializer);
 
-            local tooltip = "If checked, the tooltip will show the Catalyst information for %s for warbound or BoE items."
-            for classID = 1, GetNumClasses() do
-                local className, classFile = GetClassInfo(classID);
-                local classColor = RAID_CLASS_COLORS[classFile];
-                local label = "Show " .. classColor:WrapTextInColorCode(className);
-                local classCheckbox = self:MakeCheckbox(
-                    category,
-                    label,
-                    classID,
-                    defaults[self.settingKeys.showClassCatalystInfo][classID],
-                    tooltip:format(classColor:WrapTextInColorCode(className)),
-                    self.db[self.settingKeys.showClassCatalystInfo]
-                );
-                classCheckbox:SetParentInitializer(showWarbandInfo, isVisible);
-                classCheckbox:AddShownPredicate(isVisible);
-                classCheckbox:AddShownPredicate(isExpanded);
-            end
+        local tooltip = "If checked, the tooltip will show the Catalyst information for %s for warbound or BoE items."
+        for classID = 1, GetNumClasses() do
+            local className, classFile = GetClassInfo(classID);
+            local classColor = RAID_CLASS_COLORS[classFile];
+            local label = "Show " .. classColor:WrapTextInColorCode(className);
+            local classCheckbox = self:MakeCheckbox(
+                category,
+                label,
+                classID,
+                defaults[self.settingKeys.warbandCatalystClassList][classID],
+                tooltip:format(classColor:WrapTextInColorCode(className)),
+                self.db[self.settingKeys.warbandCatalystClassList]
+            );
+            classCheckbox:SetParentInitializer(showWarbandInfo, isVisible);
+            classCheckbox:AddShownPredicate(isVisible);
+            classCheckbox:AddShownPredicate(isExpanded);
         end
     end
     layout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Other Settings"));

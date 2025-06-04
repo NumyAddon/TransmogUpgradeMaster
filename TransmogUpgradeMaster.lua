@@ -12,6 +12,7 @@ ns.core = TUM
 TUM.data = ns.data
 --- @type TransmogUpgradeMasterConfig
 TUM.Config = ns.Config
+local settingKeys = TUM.Config.settingKeys
 
 local TIER_LFR = 1
 local TIER_NORMAL = 2
@@ -72,8 +73,15 @@ local catalystSlots = {
 
 local playerClassID = select(3, UnitClass("player"))
 
-
+local classIDToName = {}
 do
+    for classID = 1, GetNumClasses() do
+        local className, classFile = GetClassInfo(classID);
+        local classColor = RAID_CLASS_COLORS[classFile];
+        if className then
+            classIDToName[classID] = classColor:WrapTextInColorCode(className);
+        end
+    end
     TUM.currentSeason = TUM.data.currentSeason;
     TUM.sets = TUM.data.sets;
     TUM.setSourceIDs = TUM.data.setSourceIDs;
@@ -221,6 +229,34 @@ function TUM:IsCurrentSeasonItem(itemLink)
     return false
 end
 
+local mailableBindings = {
+    [Enum.TooltipDataItemBinding.Account] = true,
+    [Enum.TooltipDataItemBinding.AccountUntilEquipped] = true,
+    [Enum.TooltipDataItemBinding.BindOnEquip] = true,
+    [Enum.TooltipDataItemBinding.BindOnUse] = true,
+    [Enum.TooltipDataItemBinding.BindToAccount] = true,
+    [Enum.TooltipDataItemBinding.BindToAccountUntilEquipped] = true,
+    [Enum.TooltipDataItemBinding.BindToBnetAccount] = true,
+}
+function TUM:CanSendItemToAlt(itemLink)
+    local binding = self:GetItemBinding(itemLink)
+
+    return binding and mailableBindings[binding] or false
+end
+
+--- @param itemLink string
+--- @return number? itemBinding # see Enum.TooltipDataItemBinding
+function TUM:GetItemBinding(itemLink)
+    local data = C_TooltipInfo.GetHyperlink(itemLink);
+    for _, line in ipairs(data and data.lines or {}) do
+        if line and line.type == Enum.TooltipDataLineType.ItemBinding then
+            return line.bonding
+        end
+    end
+
+    return nil
+end
+
 local modifierFunctions = {
     [TUM.Config.modifierKeyOptions.always] = function() return true end,
     [TUM.Config.modifierKeyOptions.shift] = IsShiftKeyDown,
@@ -234,8 +270,8 @@ local modifierFunctions = {
 --- @param isCollected boolean
 function TUM:AddTooltipLine(tooltip, text, isCollected)
     local modifierSetting = isCollected
-        and self.db.showCollectedModifierKey
-        or self.db.showUncollectedModifierKey
+        and self.db[settingKeys.showCollectedModifierKey]
+        or self.db[settingKeys.showUncollectedModifierKey]
     local modifierFunction = modifierFunctions[modifierSetting]
     if not modifierFunction or not modifierFunction() then
         return
@@ -249,7 +285,7 @@ end
 --- @param tooltip GameTooltip
 --- @param text string
 function TUM:AddDebugLine(tooltip, text)
-    if not self.db.debug then return end
+    if not self.db[settingKeys.debug] then return end
 
     tooltip:AddDoubleLine('<TUM Debug>', text, 1, 0.5, 0, 1, 1, 1)
 end
@@ -399,14 +435,10 @@ function TUM:HandleTooltip(tooltip)
 
     local debugLines = {}
     local canCatalyse, canUpgrade,
-        catalystMissing, catalystUpgradeMissing, upgradeMissing = self:IsAppearanceMissing(itemLink, nil, debugLines)
+    catalystMissing, catalystUpgradeMissing, upgradeMissing = self:IsAppearanceMissing(itemLink, nil, debugLines)
 
     for _, line in ipairs(debugLines) do
         self:AddDebugLine(tooltip, line)
-    end
-
-    if not canCatalyse and not canUpgrade then
-        return
     end
 
     local loadingTooltipShown = false
@@ -433,6 +465,39 @@ function TUM:HandleTooltip(tooltip)
             if not loadingTooltipShown then loadingTooltipShown = self:ShowLoadingTooltipIfLoading(tooltip) end
         else
             self:AddTooltipLine(tooltip, UPGRADE_MARKUP .. ' Upgrade appearance', not upgradeMissing)
+        end
+    end
+
+    if modifierFunctions[self.db[settingKeys.showWarbandCatalystInfoModifierKey]]() and self:CanSendItemToAlt(itemLink) then
+        local catalystClassList = {}
+        local catalystUpgradeClassList = {}
+        for classID = 1, GetNumClasses() do
+            if classID ~= playerClassID and self.db[settingKeys.warbandCatalystClassList][classID] then
+                local _, _, classCatalystMissing, classCatalystUpgradeMissing = self:IsAppearanceMissing(itemLink, classID)
+                if classCatalystMissing then
+                    table.insert(catalystClassList, classID)
+                end
+                if classCatalystUpgradeMissing then
+                    table.insert(catalystUpgradeClassList, classID)
+                end
+            end
+        end
+        if #catalystClassList > 0 then
+            local classNames = {}
+            for _, classID in ipairs(catalystClassList) do
+                table.insert(classNames, classIDToName[classID])
+            end
+            tooltip:AddDoubleLine(CATALYST_MARKUP .. ' Catalyst missing for', table.concat(classNames, ', '))
+        end
+        if #catalystUpgradeClassList > 0 then
+            local classNames = {}
+            for _, classID in ipairs(catalystUpgradeClassList) do
+                table.insert(classNames, classIDToName[classID])
+            end
+            tooltip:AddDoubleLine(
+                CATALYST_MARKUP .. ' Catalyst & ' .. UPGRADE_MARKUP .. ' Upgrade missing for',
+                table.concat(classNames, ', ')
+            )
         end
     end
 end
@@ -462,13 +527,13 @@ function TUM:GetSourceIDsForItemID(itemID)
 end
 
 --- @param itemLink string
---- @param classID number? # defaults to the player's class
+--- @param classID number # defaults to the player's class
 --- @return boolean
 function TUM:IsValidArmorTypeForClass(itemLink, classID)
     local invType, _, itemClassID, itemSubClassID = select(4, C_Item.GetItemInfoInstant(itemLink))
 
     return invType == "INVTYPE_CLOAK"
-        or (itemClassID == Enum.ItemClass.Armor and itemSubClassID == classArmorTypeMap[classID or playerClassID])
+        or (itemClassID == Enum.ItemClass.Armor and itemSubClassID == classArmorTypeMap[classID])
 end
 
 function TUM:IsCatalystSlot(slot)
