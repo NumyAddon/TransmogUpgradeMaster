@@ -112,6 +112,17 @@ function Config:Init()
         "If Checked, debug info will be shown in the tooltip."
     );
 
+    self:MakeButton(
+        category,
+        layout,
+        "Reset Transmog Cache",
+        function()
+            TransmogUpgradeMasterCacheDB = {}
+            TUM:InitItemSourceMap()
+        end,
+        "Reset the Transmog cache. This will cause the addon to re-cache all items, which may take a minute or so. This can fix rare situations when transmog changes are hotfixed in by blizzard."
+    )
+
     Settings.RegisterAddOnCategory(category)
 
     SLASH_TRANSMOG_UPGRADE_MASTER1 = "/tum";
@@ -152,6 +163,49 @@ function Config:MakeDropdown(category, label, settingKey, defaultValue, tooltip,
     Settings.CreateDropdown(category, setting, GetOptions, tooltip);
 end
 
+function Config:MakeButton(category, layout, label, onClick, tooltip)
+    local variable = settingPrefix .. label;
+    local setting = Settings.RegisterAddOnSetting(category, variable, 'dummy', {}, Settings.VarType.Boolean, label, true);
+    local data = Settings.CreateSettingInitializerData(setting, nil, tooltip);
+    data.buttonText = label;
+    data.OnButtonClick = onClick;
+    local initializer = Settings.CreateSettingInitializer("TransmogUpgradeMaster_SettingsButtonControlTemplate", data);
+    initializer:AddSearchTags(label);
+    layout:AddInitializer(initializer);
+end
+
 function Config:OnSettingChange(setting, value)
     -- nothing so far
+end
+
+-------------------
+--- @class TransmogUpgradeMaster_SettingsButtonControlMixin : SettingsControlMixin
+TransmogUpgradeMaster_SettingsButtonControlMixin = CreateFromMixins(SettingsControlMixin);
+do
+    local function InitializeSettingTooltip(initializer)
+        Settings.InitTooltip(initializer:GetName(), initializer:GetTooltip());
+    end
+
+    local mixin = TransmogUpgradeMaster_SettingsButtonControlMixin;
+    function mixin:OnLoad()
+        SettingsControlMixin.OnLoad(self);
+        self.Button = CreateFrame("Button", nil, self, "UIPanelButtonTemplate");
+        self.Button:SetSize(200, 26);
+        self.Button:SetPoint("LEFT", self, "CENTER", -80, 0);
+    end
+
+    function mixin:Init(initializer)
+        SettingsControlMixin.Init(self, initializer);
+
+        self.Button:SetText(self.data.buttonText);
+        self.Button:SetScript("OnClick", self.data.OnButtonClick);
+        self.Button:SetScript("OnEnter", function(button)
+            GameTooltip:SetOwner(button, "ANCHOR_RIGHT");
+            InitializeSettingTooltip(initializer);
+            GameTooltip:Show();
+        end);
+        self.Button:SetScript("OnLeave", function() GameTooltip:Hide(); end);
+
+        self:EvaluateState();
+    end
 end

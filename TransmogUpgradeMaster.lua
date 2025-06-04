@@ -120,11 +120,23 @@ function TUM:ConvertClassMaskToClassList(classMask)
 end
 
 function TUM:InitItemSourceMap()
+    if self.itemSourceMapInitialized == false then
+        -- already initializing...
+        return
+    end
     local itemSourceIDs = {}
     self.itemSourceMapInitialized = false
     self.itemSourceMapProgress = 0
     self.itemSourceMapTotal = 0
     self.itemSourceIDs = TransmogUpgradeMasterCacheDB or itemSourceIDs
+    local buildNr = select(2, GetBuildInfo())
+    if buildNr == self.itemSourceIDs._buildNr then
+        self.itemSourceMapInitialized = true
+        self.itemSourceMapProgress = 1
+        self.itemSourceMapTotal = 1
+        -- only refresh the cache if the build number has changed
+        return
+    end
     --- @type table<number, TransmogCategoryAppearanceInfo[]>
     local categoryAppearances = {}
     for _, category in pairs(Enum.TransmogCollectionType) do
@@ -156,6 +168,7 @@ function TUM:InitItemSourceMap()
         self.itemSourceMapInitialized = true
         self.itemSourceIDs = itemSourceIDs
         TransmogUpgradeMasterCacheDB = itemSourceIDs
+        TransmogUpgradeMasterCacheDB._buildNr = buildNr
     end
     local resumeFunc = coroutine.wrap(iterateAppearances)
     local ticker
