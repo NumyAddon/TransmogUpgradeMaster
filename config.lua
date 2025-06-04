@@ -210,13 +210,16 @@ function Config:MakeExpandableSection(sectionName)
     end
     hooksecurefunc(expandInitializer, "InitFrame", function(_, frame)
         function frame:OnExpandedChanged(expanded)
+            self:EvaluateVisibility(expanded);
+            SettingsInbound.RepairDisplay();
+        end
+        function frame:EvaluateVisibility(expanded)
+            -- elvui wants this function to exist
             if expanded then
                 self.Button.Right:SetAtlas("Options_ListExpand_Right_Expanded", TextureKitConstants.UseAtlasSize);
             else
                 self.Button.Right:SetAtlas("Options_ListExpand_Right", TextureKitConstants.UseAtlasSize);
             end
-
-            SettingsInbound.RepairDisplay();
         end
         function frame:CalculateHeight()
             local initializer = self:GetElementData();
