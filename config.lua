@@ -4,7 +4,10 @@ local name, ns = ...;
 local Config = {}
 ns.Config = Config;
 
-local WARBAND_INFO_IMPLEMENTED = false;
+local SHOW_WARBAND_INFO_SETTINGS = false;
+--@debug@
+SHOW_WARBAND_INFO_SETTINGS = true;
+--@end-debug@
 
 Config.modifierKeyOptions = {
     always = "always",
@@ -19,7 +22,7 @@ Config.settingKeys = {
     showCollectedModifierKey = "showCollectedModifierKey",
     showUncollectedModifierKey = "showUncollectedModifierKey",
     showWarbandCatalystInfo = "showWarbandCatalystInfo",
-    showClassCatalystInfoPrefix = "showClassCatalystInfo_",
+    showClassCatalystInfo = "showClassCatalystInfo",
     debug = "debug",
 };
 
@@ -32,13 +35,17 @@ function Config:Init()
         [self.settingKeys.showCollectedModifierKey] = self.modifierKeyOptions.always,
         [self.settingKeys.showUncollectedModifierKey] = self.modifierKeyOptions.always,
         [self.settingKeys.showWarbandCatalystInfo] = self.modifierKeyOptions.shift,
+        [self.settingKeys.showClassCatalystInfo] = {},
     };
-    for classID = 1, GetNumClasses() do
-        defaults[self.settingKeys.showClassCatalystInfoPrefix .. classID] = true;
-    end
     for k, v in pairs(defaults) do
         if self.db[k] == nil then
             self.db[k] = v;
+        end
+    end
+    for classID = 1, GetNumClasses() do
+        defaults[self.settingKeys.showClassCatalystInfo][classID] = true;
+        if self.db[self.settingKeys.showClassCatalystInfo][classID] == nil then
+            self.db[self.settingKeys.showClassCatalystInfo][classID] = true;
         end
     end
 
@@ -74,12 +81,12 @@ function Config:Init()
         showModifierOptions,
         Settings.VarType.String
     );
-    if WARBAND_INFO_IMPLEMENTED then
+    if SHOW_WARBAND_INFO_SETTINGS then
         layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(
             "Warband Catalyst Info",
             "For warbound or BoE items, you can show the classes for which you can get an appearance by catalysing (and upgrading) the item."
         ));
-        self:MakeDropdown(
+        local showWarbandInfo = self:MakeDropdown(
             category,
             "Show Warband Catalyst Info",
             self.settingKeys.showWarbandCatalystInfo,
@@ -89,17 +96,30 @@ function Config:Init()
             Settings.VarType.String
         );
         do
+            local expandInitializer, isExpanded = self:MakeExpandableSection("Displayed Classes", 25, 0)
+
+            local function isVisible()
+                return self.db[self.settingKeys.showWarbandCatalystInfo] ~= self.modifierKeyOptions.never;
+            end
+            expandInitializer:AddShownPredicate(isVisible);
+            layout:AddInitializer(expandInitializer);
+
+            local tooltip = "If checked, the tooltip will show the Catalyst information for %s for warbound or BoE items."
             for classID = 1, GetNumClasses() do
                 local className, classFile = GetClassInfo(classID);
                 local classColor = RAID_CLASS_COLORS[classFile];
                 local label = "Show " .. classColor:WrapTextInColorCode(className);
-                self:MakeCheckbox(
+                local classCheckbox = self:MakeCheckbox(
                     category,
                     label,
-                    self.settingKeys.showClassCatalystInfoPrefix .. classID,
-                    defaults[self.settingKeys.showClassCatalystInfoPrefix .. classID],
-                    "If checked, the tooltip will show the Catalyst information for " .. classColor:WrapTextInColorCode(className) .. " for warbound or BoE items."
+                    classID,
+                    defaults[self.settingKeys.showClassCatalystInfo][classID],
+                    tooltip:format(classColor:WrapTextInColorCode(className)),
+                    self.db[self.settingKeys.showClassCatalystInfo]
                 );
+                classCheckbox:SetParentInitializer(showWarbandInfo, isVisible);
+                classCheckbox:AddShownPredicate(isVisible);
+                classCheckbox:AddShownPredicate(isExpanded);
             end
         end
     end
@@ -136,19 +156,29 @@ end
 
 local settingPrefix = name .. "_";
 
-function Config:MakeCheckbox(category, label, settingKey, defaultValue, tooltip)
+--- @return SettingsListElementInitializer
+function Config:MakeCheckbox(category, label, settingKey, defaultValue, tooltip, dbTableOverride)
     local variable = settingPrefix .. settingKey;
 
-    local setting = Settings.RegisterAddOnSetting(category, variable, settingKey, self.db, Settings.VarType.Boolean, label, defaultValue);
+    local setting = Settings.RegisterAddOnSetting(
+        category,
+        variable,
+        settingKey,
+        dbTableOverride or self.db,
+        Settings.VarType.Boolean,
+        label,
+        defaultValue
+     );
     setting:SetValueChangedCallback(function(setting, value) self:OnSettingChange(setting:GetVariable(), value) end);
 
-    Settings.CreateCheckbox(category, setting, tooltip);
+    return Settings.CreateCheckbox(category, setting, tooltip);
 end
 
 --- @alias TUMDropDownOptions { text: string, label: string, tooltip: string, value: any }[]
 
 --- @param options TUMDropDownOptions|fun(): TUMDropDownOptions
 --- @param varType "string"|"number"|"boolean" # one of Settings.VarType
+--- @return SettingsListElementInitializer
 function Config:MakeDropdown(category, label, settingKey, defaultValue, tooltip, options, varType)
     local variable = settingPrefix .. settingKey;
 
@@ -160,9 +190,10 @@ function Config:MakeDropdown(category, label, settingKey, defaultValue, tooltip,
     local setting = Settings.RegisterAddOnSetting(category, variable, settingKey, self.db, varType, label, defaultValue);
     setting:SetValueChangedCallback(function(setting, value) self:OnSettingChange(setting:GetVariable(), value) end);
 
-    Settings.CreateDropdown(category, setting, GetOptions, tooltip);
+    return Settings.CreateDropdown(category, setting, GetOptions, tooltip);
 end
 
+--- @return SettingsListElementInitializer
 function Config:MakeButton(category, layout, label, onClick, tooltip)
     local variable = settingPrefix .. label;
     local setting = Settings.RegisterAddOnSetting(category, variable, 'dummy', {}, Settings.VarType.Boolean, label, true);
@@ -172,6 +203,36 @@ function Config:MakeButton(category, layout, label, onClick, tooltip)
     local initializer = Settings.CreateSettingInitializer("TransmogUpgradeMaster_SettingsButtonControlTemplate", data);
     initializer:AddSearchTags(label);
     layout:AddInitializer(initializer);
+
+    return initializer;
+end
+
+--- @param sectionName string
+--- @return SettingsExpandableSectionInitializer initializer
+--- @return fun(): boolean isExpanded
+function Config:MakeExpandableSection(sectionName)
+    local expandInitializer = CreateSettingsExpandableSectionInitializer(sectionName);
+    function expandInitializer:GetExtent()
+        return 25;
+    end
+    hooksecurefunc(expandInitializer, "InitFrame", function(_, frame)
+        function frame:OnExpandedChanged(expanded)
+            if expanded then
+                self.Button.Right:SetAtlas("Options_ListExpand_Right_Expanded", TextureKitConstants.UseAtlasSize);
+            else
+                self.Button.Right:SetAtlas("Options_ListExpand_Right", TextureKitConstants.UseAtlasSize);
+            end
+
+            SettingsInbound.RepairDisplay();
+        end
+        function frame:CalculateHeight()
+            local initializer = self:GetElementData();
+
+            return initializer:GetExtent();
+        end
+    end);
+
+    return expandInitializer, function() return expandInitializer.data.expanded; end;
 end
 
 function Config:OnSettingChange(setting, value)
