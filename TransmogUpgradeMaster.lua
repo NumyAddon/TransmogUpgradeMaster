@@ -124,7 +124,7 @@ function TUM:InitItemSourceMap()
     self.itemSourceMapInitialized = false
     self.itemSourceMapProgress = 0
     self.itemSourceMapTotal = 0
-    self.itemSourceIDs = itemSourceIDs
+    self.itemSourceIDs = TransmogUpgradeMasterCacheDB or itemSourceIDs
     --- @type table<number, TransmogCategoryAppearanceInfo[]>
     local categoryAppearances = {}
     for _, category in pairs(Enum.TransmogCollectionType) do
@@ -154,6 +154,8 @@ function TUM:InitItemSourceMap()
             end
         end
         self.itemSourceMapInitialized = true
+        self.itemSourceIDs = itemSourceIDs
+        TransmogUpgradeMasterCacheDB = itemSourceIDs
     end
     local resumeFunc = coroutine.wrap(iterateAppearances)
     local ticker
@@ -261,6 +263,7 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
 
         return nil, nil, nil, nil, nil
     end
+    classID = classID or playerClassID
     local canCatalyse, canUpgradeToNextBreakpoint = false, false
     local catalystMissing, catalystUpgradeMissing, upgradeMissing = nil, nil, nil
 
@@ -424,7 +427,7 @@ end
 --- @return boolean isCacheWarmedUp
 --- @return number progress # a number between 0 and 1, where 1 means caching has finished
 function TUM:IsCacheWarmedUp()
-    if not self.itemSourceMapInitialized then
+    if not TransmogUpgradeMasterCacheDB and not self.itemSourceMapInitialized then
         return false, self.itemSourceMapProgress / self.itemSourceMapTotal
     end
     return true, 1
@@ -432,8 +435,9 @@ end
 
 --- @return boolean loading
 function TUM:ShowLoadingTooltipIfLoading(tooltip)
-    if self.itemSourceMapInitialized then return false end
-    local _, progress = self:IsCacheWarmedUp()
+    local warmedUp, progress = self:IsCacheWarmedUp()
+    if warmedUp then return false end
+
     local text = string.format("TransmogUpgradeMaster is loading (%.0f%%)", progress * 100)
     tooltip:AddLine(text, nil, nil, nil, true)
 

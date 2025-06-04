@@ -4,7 +4,7 @@
 ## Author: Numy
 ## IconTexture: Interface\Addons\TransmogUpgradeMaster\media\icon
 ## Version: @project-version@
-## SavedVariables: TransmogUpgradeMasterDB
+## SavedVariables: TransmogUpgradeMasterDB, TransmogUpgradeMasterCacheDB
 ## X-Curse-Project-ID: 1265598
 ## X-Wago-ID: 4N2mjQGL
 ## Category-enUS: Collections
