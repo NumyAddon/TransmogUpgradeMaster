@@ -33,6 +33,9 @@ end
 --- @return boolean? catalystAppearanceMissing # true if the item will teach a new appearance when catalysed
 --- @return boolean? catalystUpgradeAppearanceMissing # true if the item will teach a new appearance when catalysed AND upgraded to the next tier
 --- @return boolean? upgradeAppearanceMissing # true if the item will teach a new appearance when upgraded to the next tier
+--- @return boolean upgradeAppearanceLearnedFromOtherItem # true if the appearance is learned from another item
+--- @return boolean catalystUpgradeAppearanceLearnedFromOtherItem # true if the appearance is learned from another item
+--- @return boolean upgradeAppearanceLearnedFromOtherItem # true if the appearance is learned from another item
 function api.IsAppearanceMissing(itemLink, classID)
     return TUM:IsAppearanceMissing(itemLink, classID)
 end

@@ -15,6 +15,7 @@ Config.modifierKeyOptions = {
 Config.settingKeys = {
     hideWhenCollected = "hideWhenCollected",
     showCollectedModifierKey = "showCollectedModifierKey",
+    showCollectedFromOtherItemModifierKey = "showCollectedFromOtherItemModifierKey",
     showUncollectedModifierKey = "showUncollectedModifierKey",
     showWarbandCatalystInfoModifierKey = "showWarbandCatalystInfoModifierKey",
     warbandCatalystClassList = "warbandCatalystClassList",
@@ -28,13 +29,18 @@ function Config:Init()
         [self.settingKeys.hideWhenCollected] = false,
         [self.settingKeys.debug] = false,
         [self.settingKeys.showCollectedModifierKey] = self.modifierKeyOptions.always,
+        [self.settingKeys.showCollectedFromOtherItemModifierKey] = self.modifierKeyOptions.always,
         [self.settingKeys.showUncollectedModifierKey] = self.modifierKeyOptions.always,
         [self.settingKeys.showWarbandCatalystInfoModifierKey] = self.modifierKeyOptions.shift,
         [self.settingKeys.warbandCatalystClassList] = {},
     };
     for k, v in pairs(defaults) do
         if self.db[k] == nil then
-            self.db[k] = v;
+            if k == self.settingKeys.showCollectedFromOtherItemModifierKey then
+                self.db[k] = (self.db[self.settingKeys.showUncollectedModifierKey] or v);
+            else
+                self.db[k] = v;
+            end
         end
     end
     for classID = 1, GetNumClasses() do
@@ -60,7 +66,7 @@ function Config:Init()
     ));
     self:MakeDropdown(
         category,
-        "Show Collected TMog in Tooltip",
+        "Collected",
         self.settingKeys.showCollectedModifierKey,
         defaults.showCollectedModifierKey,
         "When to display the Upgrade and Catalyst information for collected appearances.",
@@ -69,7 +75,16 @@ function Config:Init()
     );
     self:MakeDropdown(
         category,
-        "Show Uncollected TMog in Tooltip",
+        "Collected From Other Item",
+        self.settingKeys.showCollectedFromOtherItemModifierKey,
+        defaults.showCollectedFromOtherItemModifierKey,
+        "When to display the Upgrade and Catalyst information for collected appearances that are learned from other items.",
+        showModifierOptions,
+        Settings.VarType.String
+    );
+    self:MakeDropdown(
+        category,
+        "Uncollected",
         self.settingKeys.showUncollectedModifierKey,
         defaults.showUncollectedModifierKey,
         "When to display the Upgrade and Catalyst information for uncollected appearances.",

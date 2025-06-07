@@ -14,6 +14,9 @@ TUM.data = ns.data
 TUM.Config = ns.Config
 local settingKeys = TUM.Config.settingKeys
 
+--- @alias TUM_LearnedFromOtherItem "learnedFromOtherItem"
+local LEARNED_FROM_OTHER_ITEM = 'learnedFromOtherItem'
+
 local TIER_LFR = 1
 local TIER_NORMAL = 2
 local TIER_HEROIC = 3
@@ -58,6 +61,7 @@ local CATALYST_MARKUP = CreateAtlasMarkup('CreationCatalyst-32x32', 18, 18)
 local UPGRADE_MARKUP = CreateAtlasMarkup('CovenantSanctum-Upgrade-Icon-Available', 18, 18)
 local OK_MARKUP = "|TInterface\\RaidFrame\\ReadyCheck-Ready:0|t"
 local NOK_MARKUP = "|TInterface\\RaidFrame\\ReadyCheck-NotReady:0|t"
+local OTHER_MARKUP = CreateAtlasMarkup('QuestRepeatableTurnin', 16, 16)
 
 local catalystSlots = {
     [Enum.InventoryType.IndexHeadType] = true,
@@ -268,10 +272,11 @@ local modifierFunctions = {
 --- @param tooltip GameTooltip
 --- @param text string
 --- @param isCollected boolean
-function TUM:AddTooltipLine(tooltip, text, isCollected)
-    local modifierSetting = isCollected
-        and self.db[settingKeys.showCollectedModifierKey]
-        or self.db[settingKeys.showUncollectedModifierKey]
+function TUM:AddTooltipLine(tooltip, text, isCollected, fromOtherItem)
+    local modifierSetting =
+        (isCollected and self.db[settingKeys.showCollectedModifierKey])
+        or (fromOtherItem and self.db[settingKeys.showCollectedFromOtherItemModifierKey])
+        or (self.db[settingKeys.showUncollectedModifierKey])
     local modifierFunction = modifierFunctions[modifierSetting]
     if not modifierFunction or not modifierFunction() then
         return
@@ -279,7 +284,8 @@ function TUM:AddTooltipLine(tooltip, text, isCollected)
 
     local ok = OK_MARKUP .. GREEN_FONT_COLOR:WrapTextInColorCode(' Collected ') .. OK_MARKUP
     local nok = NOK_MARKUP .. RED_FONT_COLOR:WrapTextInColorCode(' Not Collected ') .. NOK_MARKUP
-    tooltip:AddDoubleLine(text, isCollected and ok or nok)
+    local other = OTHER_MARKUP .. BLUE_FONT_COLOR:WrapTextInColorCode(' From Another Item ') .. OTHER_MARKUP
+    tooltip:AddDoubleLine(text, (isCollected and ok) or (fromOtherItem and other) or nok)
 end
 
 --- @param tooltip GameTooltip
@@ -306,19 +312,25 @@ end
 --- @return boolean? catalystAppearanceMissing # true if the item will teach a new appearance when catalysed
 --- @return boolean? catalystUpgradeAppearanceMissing # true if the item will teach a new appearance when catalysed AND upgraded to the next tier
 --- @return boolean? upgradeAppearanceMissing # true if the item will teach a new appearance when upgraded to the next tier
+--- @return boolean upgradeAppearanceLearnedFromOtherItem # true if the appearance is learned from another item
+--- @return boolean catalystUpgradeAppearanceLearnedFromOtherItem # true if the appearance is learned from another item
+--- @return boolean upgradeAppearanceLearnedFromOtherItem # true if the appearance is learned from another item
 function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
     if not C_Item.IsItemDataCachedByID(itemLink) then
         tryInsert(debugLines, 'item data not cached')
 
-        return nil, nil, nil, nil, nil
+        return nil, nil, nil, nil, nil, false, false, false
     end
     classID = classID or playerClassID
     local canCatalyse, canUpgradeToNextBreakpoint = false, false
     local catalystMissing, catalystUpgradeMissing, upgradeMissing = nil, nil, nil
+    local catalystFromOtherItem, catalystUpgradeFromOtherItem, upgradeFromOtherItem = false, false, false
 
     local itemID = tonumber(itemLink:match("item:(%d+)"))
     if not itemID or not C_Item.IsDressableItemByID(itemID) then
-        return canCatalyse, canUpgradeToNextBreakpoint, catalystMissing, catalystUpgradeMissing, upgradeMissing
+        return canCatalyse, canUpgradeToNextBreakpoint,
+            catalystMissing, catalystUpgradeMissing, upgradeMissing,
+            catalystFromOtherItem, catalystUpgradeFromOtherItem, upgradeFromOtherItem
     end
     tryInsert(debugLines, 'itemID: ' .. tostring(itemID))
 
@@ -326,10 +338,12 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
     local canUpgrade = upgradeInfo and self:IsCurrentSeasonItem(itemLink)
     local seasonID = self:GetItemSeason(itemLink)
     tryInsert(debugLines, 'seasonID: ' .. tostring(seasonID))
-    if not upgradeInfo or not seasonID then
-        tryInsert(debugLines, 'not upgradable or no seasonID')
+    if not upgradeInfo and not seasonID then
+        tryInsert(debugLines, 'not upgradable and no seasonID')
 
-        return canCatalyse, canUpgradeToNextBreakpoint, catalystMissing, catalystUpgradeMissing, upgradeMissing
+        return canCatalyse, canUpgradeToNextBreakpoint,
+            catalystMissing, catalystUpgradeMissing, upgradeMissing,
+            catalystFromOtherItem, catalystUpgradeFromOtherItem, upgradeFromOtherItem
     end
 
     local currentTier = 0;
@@ -342,8 +356,10 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
             canUpgradeToNextBreakpoint = true
         end
     end
+    local _, sourceID = C_TransmogCollection.GetItemInfo(itemLink)
+    tryInsert(debugLines, 'sourceID: ' .. tostring(sourceID))
+
     if currentTier == 0 then
-        local _, sourceID = C_TransmogCollection.GetItemInfo(itemLink)
         local sourceIDs = self:GetSourceIDsForItemID(itemID)
         local index = tIndexOf(sourceIDs or {}, sourceID)
         currentTier = index or 0
@@ -351,7 +367,9 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
         if currentTier == 0 then
             tryInsert(debugLines, 'no tier info found')
 
-            return canCatalyse, canUpgradeToNextBreakpoint, catalystMissing, catalystUpgradeMissing, upgradeMissing
+            return canCatalyse, canUpgradeToNextBreakpoint,
+                catalystMissing, catalystUpgradeMissing, upgradeMissing,
+                catalystFromOtherItem, catalystUpgradeFromOtherItem, upgradeFromOtherItem
         end
     end
     tryInsert(debugLines, 'currentTier: ' .. tostring(currentTier))
@@ -361,9 +379,6 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
         -- robes catalyse into chest pieces
         itemSlot = Enum.InventoryType.IndexChestType
     end
-
-    local _, sourceID = C_TransmogCollection.GetItemInfo(itemID)
-    tryInsert(debugLines, 'sourceID: ' .. tostring(sourceID))
 
     local setIDs = sourceID and C_TransmogSets.GetSetsContainingSourceID(sourceID)
     local relatedSets
@@ -385,31 +400,50 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
     tryInsert(debugLines, 'isCatalysed: ' .. tostring(isCatalysed))
     canCatalyse = not isCatalysed and self:IsCatalystSlot(itemSlot) and self:IsValidArmorTypeForClass(itemLink, classID)
     if canCatalyse then
+        local catalystCollected, catalystUpgradeCollected
         local playerSets = self:GetSetsForClass(classID, seasonID)
         if playerSets then
-            catalystMissing = not self:IsSetItemCollected(playerSets[currentTier], itemSlot)
+            catalystCollected = self:IsSetItemCollected(playerSets[currentTier], itemSlot)
             if canUpgradeToNextBreakpoint then
-                catalystUpgradeMissing = not self:IsSetItemCollected(playerSets[currentTier + 1], itemSlot)
+                catalystUpgradeCollected = self:IsSetItemCollected(playerSets[currentTier + 1], itemSlot)
             end
         else
-            catalystMissing = not self:IsCatalystItemCollected(seasonID, classID, itemSlot, currentTier)
+            catalystCollected = self:IsCatalystItemCollected(seasonID, classID, itemSlot, currentTier)
             if canUpgradeToNextBreakpoint then
-                catalystUpgradeMissing = not self:IsCatalystItemCollected(seasonID, classID, itemSlot, currentTier + 1)
+                catalystUpgradeCollected = self:IsCatalystItemCollected(seasonID, classID, itemSlot, currentTier + 1)
+            end
+        end
+        if catalystCollected ~= nil then
+            catalystMissing = catalystCollected ~= true
+            if catalystCollected == LEARNED_FROM_OTHER_ITEM then
+                catalystFromOtherItem = true
+            end
+        end
+        if catalystUpgradeCollected ~= nil then
+            catalystUpgradeMissing = catalystUpgradeCollected ~= true
+            if catalystUpgradeCollected == LEARNED_FROM_OTHER_ITEM then
+                catalystUpgradeFromOtherItem = true
             end
         end
     else
         tryInsert(debugLines, 'can\'t catalyse or already catalysed')
     end
+    local upgradeCollected
     if isCatalysed and relatedSets and canUpgradeToNextBreakpoint then
         local nextSetID = relatedSets[currentTier + 1]
         if nextSetID then
-            upgradeMissing = not self:IsSetItemCollected(nextSetID, itemSlot)
+            upgradeCollected = self:IsSetItemCollected(nextSetID, itemSlot)
         end
     elseif canUpgradeToNextBreakpoint then
         local sourceIDs = self:GetSourceIDsForItemID(itemID)
         if sourceIDs and sourceIDs[currentTier + 1] then
-            local nextSourceInfo = C_TransmogCollection.GetSourceInfo(sourceIDs[currentTier + 1])
-            upgradeMissing = not nextSourceInfo or not nextSourceInfo.isCollected
+            upgradeCollected = self:IsSourceIDCollected(sourceIDs[currentTier + 1])
+        end
+    end
+    if upgradeCollected ~= nil then
+        upgradeMissing = upgradeCollected ~= true
+        if upgradeCollected == LEARNED_FROM_OTHER_ITEM then
+            upgradeFromOtherItem = true
         end
     end
 
@@ -425,7 +459,9 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
         end
     end
 
-    return canCatalyse, canUpgradeToNextBreakpoint, catalystMissing, catalystUpgradeMissing, upgradeMissing
+    return canCatalyse, canUpgradeToNextBreakpoint,
+        catalystMissing, catalystUpgradeMissing, upgradeMissing,
+        catalystFromOtherItem, catalystUpgradeFromOtherItem, upgradeFromOtherItem
 end
 
 --- @param tooltip GameTooltip
@@ -435,7 +471,9 @@ function TUM:HandleTooltip(tooltip)
 
     local debugLines = {}
     local canCatalyse, canUpgrade,
-    catalystMissing, catalystUpgradeMissing, upgradeMissing = self:IsAppearanceMissing(itemLink, nil, debugLines)
+        catalystMissing, catalystUpgradeMissing, upgradeMissing,
+        catalystFromOtherItem, catalystUpgradeFromOtherItem, upgradeFromOtherItem
+        = self:IsAppearanceMissing(itemLink, nil, debugLines)
 
     for _, line in ipairs(debugLines) do
         self:AddDebugLine(tooltip, line)
@@ -446,7 +484,7 @@ function TUM:HandleTooltip(tooltip)
         if catalystMissing == nil then
             if not loadingTooltipShown then loadingTooltipShown = self:ShowLoadingTooltipIfLoading(tooltip) end
         else
-            self:AddTooltipLine(tooltip, CATALYST_MARKUP .. ' Catalyst appearance', not catalystMissing)
+            self:AddTooltipLine(tooltip, CATALYST_MARKUP .. ' Catalyst appearance', not catalystMissing, catalystFromOtherItem)
         end
         if canUpgrade then
             if catalystUpgradeMissing == nil then
@@ -455,7 +493,8 @@ function TUM:HandleTooltip(tooltip)
                 self:AddTooltipLine(
                     tooltip,
                     CATALYST_MARKUP .. ' Catalyst & ' .. UPGRADE_MARKUP .. ' Upgrade appearance',
-                    not catalystUpgradeMissing
+                    not catalystUpgradeMissing,
+                    catalystUpgradeFromOtherItem
                 )
             end
         end
@@ -464,7 +503,7 @@ function TUM:HandleTooltip(tooltip)
         if upgradeMissing == nil then
             if not loadingTooltipShown then loadingTooltipShown = self:ShowLoadingTooltipIfLoading(tooltip) end
         else
-            self:AddTooltipLine(tooltip, UPGRADE_MARKUP .. ' Upgrade appearance', not upgradeMissing)
+            self:AddTooltipLine(tooltip, UPGRADE_MARKUP .. ' Upgrade appearance', not upgradeMissing, upgradeFromOtherItem)
         end
     end
 
@@ -544,9 +583,33 @@ function TUM:IsItemCatalysed(itemID)
     return not not self.catalystItemByID[itemID]
 end
 
+--- @param sourceID number
+--- @return boolean|TUM_LearnedFromOtherItem
+function TUM:IsSourceIDCollected(sourceID)
+    local sourceInfo = C_TransmogCollection.GetSourceInfo(sourceID)
+    if not sourceInfo then
+        return false
+    end
+    if sourceInfo.isCollected then
+        return true
+    end
+    local sourceIDs = C_TransmogCollection.GetAllAppearanceSources(sourceInfo.visualID);
+    if sourceIDs and #sourceIDs > 0 then
+        for _, id in ipairs(sourceIDs) do
+            local info = C_TransmogCollection.GetSourceInfo(id)
+            if info and info.isCollected then
+                return LEARNED_FROM_OTHER_ITEM
+            end
+        end
+    end
+
+    return false
+end
+
 --- @param seasonID number
 --- @param slot number # Enum.InventoryType
 --- @param tier number # one of TIER_x constants
+--- @return boolean|nil|TUM_LearnedFromOtherItem
 function TUM:IsCatalystItemCollected(seasonID, classID, slot, tier)
     if not self.catalystItems[seasonID] or not self.catalystItems[seasonID][classID] then
         return nil
@@ -559,30 +622,28 @@ function TUM:IsCatalystItemCollected(seasonID, classID, slot, tier)
         return nil
     end
 
-    local sourceInfo = C_TransmogCollection.GetSourceInfo(sourceIDs[tier])
-
-    return sourceInfo and sourceInfo.isCollected or false
+    return self:IsSourceIDCollected(sourceIDs[tier])
 end
 
+--- @param transmogSetID number
+--- @param slot number # Enum.InventoryType
+--- @return boolean|nil|TUM_LearnedFromOtherItem
 function TUM:IsSetItemCollected(transmogSetID, slot)
     if self.setSourceIDs[transmogSetID] then
         local sourceID = self.setSourceIDs[transmogSetID][slot]
-        if sourceID then
-            local sourceInfo = C_TransmogCollection.GetSourceInfo(sourceID)
-            if sourceInfo and sourceInfo.isCollected then
-                return true
-            end
-        end
 
-        return false
+        return sourceID and self:IsSourceIDCollected(sourceID) or false
     end
 
     local sources = C_TransmogSets.GetSourcesForSlot(transmogSetID, slot)
+    local fromOtherItem = false
     for _, slotSourceInfo in ipairs(sources) do
         if slotSourceInfo.isCollected then
             return true
+        elseif self:IsSourceIDCollected(slotSourceInfo.sourceID) == LEARNED_FROM_OTHER_ITEM then
+            fromOtherItem = true
         end
     end
 
-    return false
+    return fromOtherItem and LEARNED_FROM_OTHER_ITEM or false
 end
