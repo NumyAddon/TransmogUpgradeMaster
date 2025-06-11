@@ -21,6 +21,7 @@ local TIER_LFR = 1
 local TIER_NORMAL = 2
 local TIER_HEROIC = 3
 local TIER_MYTHIC = 4
+
 local MYTH_TRACK_STRING_ID = 978;
 local HERO_TRACK_STRING_ID = 974;
 local CHAMPION_TRACK_STRING_ID = 973;
@@ -31,12 +32,15 @@ local TRACK_STRING_ID_TO_TIERS = {
     [HERO_TRACK_STRING_ID] = TIER_HEROIC,
     [MYTH_TRACK_STRING_ID] = TIER_MYTHIC,
 }
+
+local CONQUEST_ITEM_MOD_ID = 159;
 local ITEM_MOD_ID_TIERS = {
     [4] = TIER_LFR,
     [0] = TIER_NORMAL,
     [1] = TIER_HEROIC,
     [3] = TIER_MYTHIC,
 }
+
 local CLOTH = Enum.ItemArmorSubclass.Cloth
 local LEATHER = Enum.ItemArmorSubclass.Leather
 local MAIL = Enum.ItemArmorSubclass.Mail
@@ -56,6 +60,7 @@ local classArmorTypeMap = {
     [12] = LEATHER, -- DEMONHUNTER
     [13] = MAIL, -- EVOKER
 }
+
 local ITEM_UPGRADE_TOOLTIP_PATTERN = ITEM_UPGRADE_TOOLTIP_FORMAT_STRING:gsub('%%d', '(%%d+)'):gsub('%%s', '(.-)');
 local CATALYST_MARKUP = CreateAtlasMarkup('CreationCatalyst-32x32', 18, 18)
 local UPGRADE_MARKUP = CreateAtlasMarkup('CovenantSanctum-Upgrade-Icon-Available', 18, 18)
@@ -233,6 +238,18 @@ function TUM:IsCurrentSeasonItem(itemLink)
     return false
 end
 
+--- @param itemLink string
+--- @return boolean isConquestPvpItem
+function TUM:IsConquestPvpItem(itemLink)
+    local _, sourceID = C_TransmogCollection.GetItemInfo(itemLink)
+    if not sourceID then
+        return false
+    end
+    local sourceInfo = C_TransmogCollection.GetSourceInfo(sourceID)
+
+    return sourceInfo and sourceInfo.itemModID == CONQUEST_ITEM_MOD_ID or false
+end
+
 local mailableBindings = {
     [Enum.TooltipDataItemBinding.Account] = true,
     [Enum.TooltipDataItemBinding.AccountUntilEquipped] = true,
@@ -359,6 +376,11 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
     local _, sourceID = C_TransmogCollection.GetItemInfo(itemLink)
     tryInsert(debugLines, 'sourceID: ' .. tostring(sourceID))
 
+    if sourceID and debugLines then
+        local sourceInfo = C_TransmogCollection.GetSourceInfo(sourceID)
+        tryInsert(debugLines, 'itemModID: ' .. tostring(sourceInfo and sourceInfo.itemModID))
+    end
+
     if currentTier == 0 then
         local sourceIDs = self:GetSourceIDsForItemID(itemID)
         local index = tIndexOf(sourceIDs or {}, sourceID)
@@ -396,9 +418,16 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
         end
     end
 
+    -- conquest PvP items can be catalysed for set bonus and upgraded, but they keep their appearance
+    local isConquestPvpItem = self:IsConquestPvpItem(itemLink)
+    tryInsert(debugLines, 'isConquestPvpItem: ' .. tostring(isConquestPvpItem))
+    if isConquestPvpItem then
+        canUpgradeToNextBreakpoint = false
+    end
+
     local isCatalysed = self:IsItemCatalysed(itemID)
     tryInsert(debugLines, 'isCatalysed: ' .. tostring(isCatalysed))
-    canCatalyse = not isCatalysed and self:IsCatalystSlot(itemSlot) and self:IsValidArmorTypeForClass(itemLink, classID)
+    canCatalyse = not isCatalysed and not isConquestPvpItem and self:IsCatalystSlot(itemSlot) and self:IsValidArmorTypeForClass(itemLink, classID)
     if canCatalyse then
         local catalystCollected, catalystUpgradeCollected
         local playerSets = self:GetSetsForClass(classID, seasonID)
@@ -426,7 +455,7 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
             end
         end
     else
-        tryInsert(debugLines, 'can\'t catalyse or already catalysed')
+        tryInsert(debugLines, 'can\'t catalyse or catalyst keeps old appearance')
     end
     local upgradeCollected
     if isCatalysed and relatedSets and canUpgradeToNextBreakpoint then
