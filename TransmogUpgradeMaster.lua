@@ -40,6 +40,12 @@ local ITEM_MOD_ID_TIERS = {
     [1] = TIER_HEROIC,
     [3] = TIER_MYTHIC,
 }
+local ITEM_CONTEXT_TIERS = {
+    [Enum.ItemCreationContext.RaidFinder] = TIER_LFR,
+    [Enum.ItemCreationContext.RaidNormal] = TIER_NORMAL,
+    [Enum.ItemCreationContext.RaidHeroic] = TIER_HEROIC,
+    [Enum.ItemCreationContext.RaidMythic] = TIER_MYTHIC,
+}
 
 local CLOTH = Enum.ItemArmorSubclass.Cloth
 local LEATHER = Enum.ItemArmorSubclass.Leather
@@ -125,15 +131,15 @@ end
 --- @param classMask number
 --- @return number[] classIDList
 function TUM:ConvertClassMaskToClassList(classMask)
-	local classIDList = {};
-	for classID = 1, GetNumClasses() do
-		local classAllowed = FlagsUtil.IsSet(classMask, bit.lshift(1, (classID - 1)));
-		if classAllowed then
-			table.insert(classIDList, classID);
-		end
-	end
+    local classIDList = {};
+    for classID = 1, GetNumClasses() do
+        local classAllowed = FlagsUtil.IsSet(classMask, bit.lshift(1, (classID - 1)));
+        if classAllowed then
+            table.insert(classIDList, classID);
+        end
+    end
 
-	return classIDList;
+    return classIDList;
 end
 
 function TUM:InitItemSourceMap()
@@ -198,6 +204,30 @@ function TUM:InitItemSourceMap()
     end)
 end
 
+function TUM:IsToken(itemID)
+    return not not self.data.tokens[itemID]
+end
+
+--- @return nil|{season: number, classList: number[], tier: number|nil, slot: number}
+function TUM:GetTokenInfo(itemID, itemLink)
+    local tokenInfo = self.data.tokens[itemID]
+    if not tokenInfo then
+        return nil
+    end
+
+    local _, data = LinkUtil.ExtractLink(itemLink)
+    local parts = strsplittable(':', data)
+    local itemCreationContext = tonumber(parts[12])
+    local tier = ITEM_CONTEXT_TIERS[itemCreationContext] or nil
+
+    return {
+        season = tokenInfo.season,
+        tier = tier,
+        slot = tokenInfo.slot,
+        classList = tokenInfo.classList,
+    }
+end
+
 local BONUS_ID_OFFSET = 13;
 function TUM:GetItemSeason(itemLink)
     if self:IsCurrentSeasonItem(itemLink) then
@@ -206,6 +236,10 @@ function TUM:GetItemSeason(itemLink)
 
     local _, data = LinkUtil.ExtractLink(itemLink);
     local parts = strsplittable(':', data);
+    local itemID = tonumber(parts[1]);
+    local tokenInfo = self.data.tokens[itemID];
+    if tokenInfo then return tokenInfo.season; end
+
     local numBonusIDs = tonumber(parts[BONUS_ID_OFFSET]) or 0;
     for index = (BONUS_ID_OFFSET + 1), (BONUS_ID_OFFSET + numBonusIDs) do
         local bonusID = tonumber(parts[index]);
@@ -344,7 +378,8 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
     local catalystFromOtherItem, catalystUpgradeFromOtherItem, upgradeFromOtherItem = false, false, false
 
     local itemID = tonumber(itemLink:match("item:(%d+)"))
-    if not itemID or not C_Item.IsDressableItemByID(itemID) then
+    local isToken = itemID and self:IsToken(itemID)
+    if not itemID or (not isToken and not C_Item.IsDressableItemByID(itemID)) then
         return canCatalyse, canUpgradeToNextBreakpoint,
             catalystMissing, catalystUpgradeMissing, upgradeMissing,
             catalystFromOtherItem, catalystUpgradeFromOtherItem, upgradeFromOtherItem
@@ -381,6 +416,19 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
         tryInsert(debugLines, 'itemModID: ' .. tostring(sourceInfo and sourceInfo.itemModID))
     end
 
+    local tokenInfo = isToken and self:GetTokenInfo(itemID, itemLink)
+    if tokenInfo then
+        if not tokenInfo.classList[classID] then
+            tryInsert(debugLines, 'item is a token for another class')
+
+            return canCatalyse, canUpgradeToNextBreakpoint,
+                catalystMissing, catalystUpgradeMissing, upgradeMissing,
+                catalystFromOtherItem, catalystUpgradeFromOtherItem, upgradeFromOtherItem
+        end
+
+        currentTier = tokenInfo.tier or currentTier
+    end
+
     if currentTier == 0 then
         local sourceIDs = self:GetSourceIDsForItemID(itemID)
         local index = tIndexOf(sourceIDs or {}, sourceID)
@@ -396,7 +444,7 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
     end
     tryInsert(debugLines, 'currentTier: ' .. tostring(currentTier))
 
-    local itemSlot = C_Item.GetItemInventoryTypeByID(itemLink)
+    local itemSlot = tokenInfo and tokenInfo.slot or C_Item.GetItemInventoryTypeByID(itemLink)
     if itemSlot == Enum.InventoryType.IndexRobeType then
         -- robes catalyse into chest pieces
         itemSlot = Enum.InventoryType.IndexChestType
@@ -427,7 +475,7 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
 
     local isCatalysed = self:IsItemCatalysed(itemID)
     tryInsert(debugLines, 'isCatalysed: ' .. tostring(isCatalysed))
-    canCatalyse = not isCatalysed and not isConquestPvpItem and self:IsCatalystSlot(itemSlot) and self:IsValidArmorTypeForClass(itemLink, classID)
+    canCatalyse = tokenInfo or (not isCatalysed and not isConquestPvpItem and self:IsCatalystSlot(itemSlot) and self:IsValidArmorTypeForClass(itemLink, classID))
     if canCatalyse then
         local catalystCollected, catalystUpgradeCollected
         local playerSets = self:GetSetsForClass(classID, seasonID)

@@ -209,6 +209,30 @@ data.catalystItems = {
     },
 }
 
+data.tokens = {
+    -- TWW S2
+    [228799] = { season = 14, slot = Enum.InventoryType.IndexChestType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Greased Gallybux
+    [228803] = { season = 14, slot = Enum.InventoryType.IndexHandType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Bloody Gallybux
+    [228807] = { season = 14, slot = Enum.InventoryType.IndexHeadType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Gilded Gallybux
+    [228811] = { season = 14, slot = Enum.InventoryType.IndexLegsType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Rusty Gallybux
+    [228815] = { season = 14, slot = Enum.InventoryType.IndexShoulderType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Polished Gallybux
+    [228800] = { season = 14, slot = Enum.InventoryType.IndexChestType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Greased Gallybux
+    [228804] = { season = 14, slot = Enum.InventoryType.IndexHandType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Bloody Gallybux
+    [228808] = { season = 14, slot = Enum.InventoryType.IndexHeadType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Gilded Gallybux
+    [228812] = { season = 14, slot = Enum.InventoryType.IndexLegsType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Rusty Gallybux
+    [228816] = { season = 14, slot = Enum.InventoryType.IndexShoulderType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Polished Gallybux
+    [228801] = { season = 14, slot = Enum.InventoryType.IndexChestType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Greased Gallybux
+    [228805] = { season = 14, slot = Enum.InventoryType.IndexHandType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Bloody Gallybux
+    [228809] = { season = 14, slot = Enum.InventoryType.IndexHeadType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Gilded Gallybux
+    [228813] = { season = 14, slot = Enum.InventoryType.IndexLegsType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Rusty Gallybux
+    [228817] = { season = 14, slot = Enum.InventoryType.IndexShoulderType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Polished Gallybux
+    [228802] = { season = 14, slot = Enum.InventoryType.IndexChestType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Greased Gallybux
+    [228806] = { season = 14, slot = Enum.InventoryType.IndexHandType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Bloody Gallybux
+    [228810] = { season = 14, slot = Enum.InventoryType.IndexHeadType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Gilded Gallybux
+    [228814] = { season = 14, slot = Enum.InventoryType.IndexLegsType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Rusty Gallybux
+    [228818] = { season = 14, slot = Enum.InventoryType.IndexShoulderType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Polished Gallybux
+};
+
 --- @type table<number, number> # [itemID] = seasonID
 data.catalystItemByID = {};
 do
