@@ -114,9 +114,9 @@ EventUtil.ContinueOnAddOnLoaded(name, function()
     end)
 
     --- @param tooltip GameTooltip
-    TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip)
+    TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, tooltipData)
         if tooltip == GameTooltip or tooltip == GameTooltip.ItemTooltip.Tooltip then
-            TUM:HandleTooltip(tooltip)
+            TUM:HandleTooltip(tooltip, tooltipData)
         end
     end)
 end)
@@ -293,16 +293,19 @@ local mailableBindings = {
     [Enum.TooltipDataItemBinding.BindToAccountUntilEquipped] = true,
     [Enum.TooltipDataItemBinding.BindToBnetAccount] = true,
 }
-function TUM:CanSendItemToAlt(itemLink)
-    local binding = self:GetItemBinding(itemLink)
+--- @param itemLink string
+--- @param tooltipData TooltipData
+function TUM:CanSendItemToAlt(itemLink, tooltipData)
+    local binding = self:GetItemBinding(itemLink, tooltipData)
 
     return binding and mailableBindings[binding] or false
 end
 
 --- @param itemLink string
+--- @param tooltipData TooltipData
 --- @return number? itemBinding # see Enum.TooltipDataItemBinding
-function TUM:GetItemBinding(itemLink)
-    local data = C_TooltipInfo.GetHyperlink(itemLink);
+function TUM:GetItemBinding(itemLink, tooltipData)
+    local data = tooltipData or C_TooltipInfo.GetHyperlink(itemLink);
     for _, line in ipairs(data and data.lines or {}) do
         if line and line.type == Enum.TooltipDataLineType.ItemBinding then
             return line.bonding
@@ -542,7 +545,8 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
 end
 
 --- @param tooltip GameTooltip
-function TUM:HandleTooltip(tooltip)
+--- @param tooltipData TooltipData
+function TUM:HandleTooltip(tooltip, tooltipData)
     local itemLink = select(2, TooltipUtil.GetDisplayedItem(tooltip))
     if not itemLink then return end
 
@@ -584,7 +588,7 @@ function TUM:HandleTooltip(tooltip)
         end
     end
 
-    if modifierFunctions[self.db[settingKeys.showWarbandCatalystInfoModifierKey]]() and self:CanSendItemToAlt(itemLink) then
+    if modifierFunctions[self.db[settingKeys.showWarbandCatalystInfoModifierKey]]() and self:CanSendItemToAlt(itemLink, tooltipData) then
         local catalystClassList = {}
         local catalystUpgradeClassList = {}
         for classID = 1, GetNumClasses() do
