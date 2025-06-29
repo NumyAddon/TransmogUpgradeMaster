@@ -24,6 +24,22 @@ data.sets = {
         [12] = { 4282, 4281, 4279, 4280 }, -- Demon Hunter
         [13] = { 4290, 4289, 4287, 4288 }, -- Evoker
     },
+    -- TWW S3
+    [15] = {
+        [1] = { 5148, 5147, 5145, 5146 }, -- Warrior
+        [2] = { 5128, 5127, 5125, 5126 }, -- Paladin
+        [3] = { 5116, 5115, 5113, 5114 }, -- Hunter
+        [4] = { 5136, 5135, 5133, 5134 }, -- Rogue
+        [5] = { 5132, 5131, 5129, 5130 }, -- Priest
+        [6] = { 5100, 5099, 5097, 5098 }, -- Death Knight
+        [7] = { 5140, 5139, 5137, 5138 }, -- Shaman
+        [8] = { 5120, 5119, 5117, 5118 }, -- Mage
+        [9] = { 5144, 5143, 5141, 5142 }, -- Warlock
+        [10] = { 5124, 5123, 5121, 5122 }, -- Monk
+        [11] = { 5108, 5107, 5105, 5106 }, -- Druid
+        [12] = { 5104, 5103, 5101, 5102 }, -- Demon Hunter
+        [13] = { 5112, 5111, 5109, 5110 }, -- Evoker
+    }
 }
 
 --- C_TransmogSets.GetSourceIDsForSlot and C_TransmogSets.GetSourcesForSlot miss information for certain slots, very "fun" -.-
@@ -82,6 +98,60 @@ data.setSourceIDs = {
     [4289] = { [1] = 225761, [3] = 225737, [5] = 225797, [6] = 225725, [7] = 225749, [8] = 225785, [9] = 225713, [10] = 225773, [16] = 225701 }, -- Evoker
     [4287] = { [1] = 225767, [3] = 225743, [5] = 225803, [6] = 225731, [7] = 225755, [8] = 225791, [9] = 225719, [10] = 225779, [16] = 225707 }, -- Evoker
     [4288] = { [1] = 225768, [3] = 225744, [5] = 225804, [6] = 225732, [7] = 225756, [8] = 225792, [9] = 225720, [10] = 225780, [16] = 225708 }, -- Evoker
+    -- TWW S3
+    [5148] = { [1] = 285583, [3] = 285559, [5] = 285619, [6] = 285547, [7] = 285571, [8] = 285607, [9] = 285535, [10] = 285595, [16] = 285523 }, -- Warrior
+    [5147] = { [1] = 285578, [3] = 285554, [5] = 285614, [6] = 285542, [7] = 285566, [8] = 285602, [9] = 285530, [10] = 285590, [16] = 285518 }, -- Warrior
+    [5145] = { [1] = 285584, [3] = 285560, [5] = 285620, [6] = 285548, [7] = 285572, [8] = 285608, [9] = 285536, [10] = 285596, [16] = 285524 }, -- Warrior
+    [5146] = { [1] = 285585, [3] = 285561, [5] = 285621, [6] = 285549, [7] = 285573, [8] = 285609, [9] = 285537, [10] = 285597, [16] = 285525 }, -- Warrior
+    [5128] = { [1] = 285691, [3] = 285667, [5] = 285727, [6] = 285655, [7] = 285679, [8] = 285715, [9] = 285643, [10] = 285703, [16] = 285631 }, -- Paladin
+    [5127] = { [1] = 285686, [3] = 285662, [5] = 285722, [6] = 285650, [7] = 285674, [8] = 285710, [9] = 285638, [10] = 285698, [16] = 285626 }, -- Paladin
+    [5125] = { [1] = 285692, [3] = 285668, [5] = 285728, [6] = 285656, [7] = 285680, [8] = 285716, [9] = 285644, [10] = 285704, [16] = 285632 }, -- Paladin
+    [5126] = { [1] = 285693, [3] = 285669, [5] = 285729, [6] = 285657, [7] = 285681, [8] = 285717, [9] = 285645, [10] = 285705, [16] = 285633 }, -- Paladin
+    [5116] = { [1] = 286007, [3] = 285983, [5] = 286043, [6] = 285971, [7] = 285995, [8] = 286031, [9] = 285959, [10] = 286019, [16] = 285947 }, -- Hunter
+    [5115] = { [1] = 286002, [3] = 285978, [5] = 286038, [6] = 285966, [7] = 285990, [8] = 286026, [9] = 285954, [10] = 286014, [16] = 285942 }, -- Hunter
+    [5113] = { [1] = 286008, [3] = 285984, [5] = 286044, [6] = 285972, [7] = 285996, [8] = 286032, [9] = 285960, [10] = 286020, [16] = 285948 }, -- Hunter
+    [5114] = { [1] = 286009, [3] = 285985, [5] = 286045, [6] = 285973, [7] = 285997, [8] = 286033, [9] = 285961, [10] = 286021, [16] = 285949 }, -- Hunter
+    [5136] = { [1] = 286223, [3] = 286199, [5] = 286259, [6] = 286187, [7] = 286211, [8] = 286247, [9] = 286175, [10] = 286235, [16] = 286163 }, -- Rogue
+    [5135] = { [1] = 286218, [3] = 286194, [5] = 286254, [6] = 286182, [7] = 286206, [8] = 286242, [9] = 286170, [10] = 286230, [16] = 286158 }, -- Rogue
+    [5133] = { [1] = 286224, [3] = 286200, [5] = 286260, [6] = 286188, [7] = 286212, [8] = 286248, [9] = 286176, [10] = 286236, [16] = 286164 }, -- Rogue
+    [5134] = { [1] = 286225, [3] = 286201, [5] = 286261, [6] = 286189, [7] = 286213, [8] = 286249, [9] = 286177, [10] = 286237, [16] = 286165 }, -- Rogue
+    [5132] = { [1] = 286763, [3] = 286739, [5] = 286799, [6] = 286727, [7] = 286751, [8] = 286787, [9] = 286715, [10] = 286775, [16] = 286703 }, -- Priest
+    [5131] = { [1] = 286758, [3] = 286734, [5] = 286794, [6] = 286722, [7] = 286746, [8] = 286782, [9] = 286710, [10] = 286770, [16] = 286698 }, -- Priest
+    [5129] = { [1] = 286764, [3] = 286740, [5] = 286800, [6] = 286728, [7] = 286752, [8] = 286788, [9] = 286716, [10] = 286776, [16] = 286704 }, -- Priest
+    [5130] = { [1] = 286765, [3] = 286741, [5] = 286801, [6] = 286729, [7] = 286753, [8] = 286789, [9] = 286717, [10] = 286777, [16] = 286705 }, -- Priest
+    [5100] = { [1] = 285799, [3] = 285775, [5] = 285835, [6] = 285763, [7] = 285787, [8] = 285823, [9] = 285751, [10] = 285811, [16] = 285739 }, -- Death Knight
+    [5099] = { [1] = 285794, [3] = 285770, [5] = 285830, [6] = 285758, [7] = 285782, [8] = 285818, [9] = 285746, [10] = 285806, [16] = 285734 }, -- Death Knight
+    [5097] = { [1] = 285800, [3] = 285776, [5] = 285836, [6] = 285764, [7] = 285788, [8] = 285824, [9] = 285752, [10] = 285812, [16] = 285740 }, -- Death Knight
+    [5098] = { [1] = 285801, [3] = 285777, [5] = 285837, [6] = 285765, [7] = 285789, [8] = 285825, [9] = 285753, [10] = 285813, [16] = 285741 }, -- Death Knight
+    [5140] = { [1] = 285903, [3] = 285883, [5] = 285936, [6] = 285871, [7] = 285892, [8] = 285927, [9] = 285859, [10] = 285915, [16] = 285847 }, -- Shaman
+    [5139] = { [1] = 285898, [3] = 285878, [5] = 285937, [6] = 285866, [7] = 285893, [8] = 285922, [9] = 285854, [10] = 285910, [16] = 285842 }, -- Shaman
+    [5137] = { [1] = 285904, [3] = 285884, [5] = 285938, [6] = 285872, [7] = 285894, [8] = 285928, [9] = 285860, [10] = 285916, [16] = 285848 }, -- Shaman
+    -- @TODO: slot 3 is missing, what's up with that?
+    [5138] = { [1] = 285905, [5] = 285939, [6] = 285873, [7] = 285895, [8] = 285929, [9] = 285861, [10] = 285917, [16] = 285849 }, -- Shaman
+    [5120] = { [1] = 286870, [3] = 286846, [5] = 286906, [6] = 286834, [7] = 286858, [8] = 286894, [9] = 286822, [10] = 286882, [16] = 286810 }, -- Mage
+    [5119] = { [1] = 286865, [3] = 286841, [5] = 286901, [6] = 286829, [7] = 286853, [8] = 286889, [9] = 286817, [10] = 286877, [16] = 286805 }, -- Mage
+    [5117] = { [1] = 286871, [3] = 286847, [5] = 286907, [6] = 286835, [7] = 286859, [8] = 286895, [9] = 286823, [10] = 286883, [16] = 286811 }, -- Mage
+    [5118] = { [1] = 286872, [3] = 286848, [5] = 286908, [6] = 286836, [7] = 286860, [8] = 286896, [9] = 286824, [10] = 286884, [16] = 286812 }, -- Mage
+    [5144] = { [1] = 286655, [3] = 286631, [5] = 286691, [6] = 286619, [7] = 286643, [8] = 286679, [9] = 286607, [10] = 286667, [16] = 286595 }, -- Warlock
+    [5143] = { [1] = 286650, [3] = 286626, [5] = 286686, [6] = 286614, [7] = 286638, [8] = 286674, [9] = 286602, [10] = 286662, [16] = 286590 }, -- Warlock
+    [5141] = { [1] = 286656, [3] = 286632, [5] = 286692, [6] = 286620, [7] = 286644, [8] = 286680, [9] = 286608, [10] = 286668, [16] = 286596 }, -- Warlock
+    [5142] = { [1] = 286657, [3] = 286633, [5] = 286693, [6] = 286621, [7] = 286645, [8] = 286681, [9] = 286609, [10] = 286669, [16] = 286597 }, -- Warlock
+    [5124] = { [1] = 286331, [3] = 286307, [5] = 286367, [6] = 286295, [7] = 286319, [8] = 286355, [9] = 286283, [10] = 286343, [16] = 286271 }, -- Monk
+    [5123] = { [1] = 286326, [3] = 286302, [5] = 286362, [6] = 286290, [7] = 286314, [8] = 286350, [9] = 286278, [10] = 286338, [16] = 286266 }, -- Monk
+    [5121] = { [1] = 286332, [3] = 286308, [5] = 286368, [6] = 286296, [7] = 286320, [8] = 286356, [9] = 286284, [10] = 286344, [16] = 286272 }, -- Monk
+    [5122] = { [1] = 286333, [3] = 286309, [5] = 286369, [6] = 286297, [7] = 286321, [8] = 286357, [9] = 286285, [10] = 286345, [16] = 286273 }, -- Monk
+    [5108] = { [1] = 286439, [3] = 286415, [5] = 286475, [6] = 286403, [7] = 286427, [8] = 286463, [9] = 286391, [10] = 286451, [16] = 286379 }, -- Druid
+    [5107] = { [1] = 286434, [3] = 286410, [5] = 286470, [6] = 286398, [7] = 286422, [8] = 286458, [9] = 286386, [10] = 286446, [16] = 286374 }, -- Druid
+    [5105] = { [1] = 286440, [3] = 286416, [5] = 286476, [6] = 286404, [7] = 286428, [8] = 286464, [9] = 286392, [10] = 286452, [16] = 286380 }, -- Druid
+    [5106] = { [1] = 286441, [3] = 286417, [5] = 286477, [6] = 286405, [7] = 286429, [8] = 286465, [9] = 286393, [10] = 286453, [16] = 286381 }, -- Druid
+    [5104] = { [1] = 286547, [3] = 286523, [5] = 286583, [6] = 286511, [7] = 286535, [8] = 286571, [9] = 286499, [10] = 286559, [16] = 286487 }, -- Demon Hunter
+    [5103] = { [1] = 286542, [3] = 286518, [5] = 286578, [6] = 286506, [7] = 286530, [8] = 286566, [9] = 286494, [10] = 286554, [16] = 286482 }, -- Demon Hunter
+    [5101] = { [1] = 286548, [3] = 286524, [5] = 286584, [6] = 286512, [7] = 286536, [8] = 286572, [9] = 286500, [10] = 286560, [16] = 286488 }, -- Demon Hunter
+    [5102] = { [1] = 286549, [3] = 286525, [5] = 286585, [6] = 286513, [7] = 286537, [8] = 286573, [9] = 286501, [10] = 286561, [16] = 286489 }, -- Demon Hunter
+    [5112] = { [1] = 286115, [3] = 286091, [5] = 286151, [6] = 286079, [7] = 286103, [8] = 286139, [9] = 286067, [10] = 286127, [16] = 286055 }, -- Evoker
+    [5111] = { [1] = 286110, [3] = 286086, [5] = 286146, [6] = 286074, [7] = 286098, [8] = 286134, [9] = 286062, [10] = 286122, [16] = 286050 }, -- Evoker
+    [5109] = { [1] = 286116, [3] = 286092, [5] = 286152, [6] = 286080, [7] = 286104, [8] = 286140, [9] = 286068, [10] = 286128, [16] = 286056 }, -- Evoker
+    [5110] = { [1] = 286117, [3] = 286093, [5] = 286153, [6] = 286081, [7] = 286105, [8] = 286141, [9] = 286069, [10] = 286129, [16] = 286057 }, -- Evoker
 }
 
 data.catalystBonusIDMap = {
@@ -92,6 +162,7 @@ data.catalystBonusIDMap = {
     [10376] = 12, [10377] = 12, [10378] = 12, [10379] = 12, [10380] = 12,
     [10870] = 13, [10871] = 13, [10872] = 13, [10873] = 13, [10874] = 13,
     [11964] = 14, [11965] = 14, [11966] = 14, [11967] = 14, [11998] = 14,
+    [12239] = 15, [12240] = 15, [12241] = 15, [12242] = 15, [12243] = 15,
 }
 
 --- @type table<number, table<number, table<number, number>>> # [m+ seasonID][classID][slotID] = itemID
@@ -207,6 +278,22 @@ data.catalystItems = {
         [12] = { [1] = 229316, [3] = 229314, [5] = 229319, [6] = 229313, [7] = 229315, [8] = 229318, [9] = 229312, [10] = 229317, [16] = 229311 }, -- Demon Hunter
         [13] = { [1] = 229280, [3] = 229278, [5] = 229283, [6] = 229277, [7] = 229279, [8] = 229282, [9] = 229276, [10] = 229281, [16] = 229275 }, -- Evoker
     },
+    -- TWW S3
+    [15] = {
+        [1] = { [1] = 237610, [3] = 237608, [5] = 237613, [6] = 237607, [7] = 237609, [8] = 237612, [9] = 237606, [10] = 237611, [16] = 237605 }, -- Warrior
+        [2] = { [1] = 237619, [3] = 237617, [5] = 237622, [6] = 237616, [7] = 237618, [8] = 237621, [9] = 237615, [10] = 237620, [16] = 237614 }, -- Paladin
+        [3] = { [1] = 237646, [3] = 237644, [5] = 237649, [6] = 237643, [7] = 237645, [8] = 237648, [9] = 237642, [10] = 237647, [16] = 237641 }, -- Hunter
+        [4] = { [1] = 237664, [3] = 237662, [5] = 237667, [6] = 237661, [7] = 237663, [8] = 237666, [9] = 237660, [10] = 237665, [16] = 237659 }, -- Rogue
+        [5] = { [1] = 237709, [3] = 237707, [5] = 237712, [6] = 237706, [7] = 237708, [8] = 237711, [9] = 237705, [10] = 237710, [16] = 237704 }, -- Priest
+        [6] = { [1] = 237628, [3] = 237626, [5] = 237631, [6] = 237625, [7] = 237627, [8] = 237630, [9] = 237624, [10] = 237629, [16] = 237623 }, -- Death Knight
+        [7] = { [1] = 237637, [3] = 237635, [5] = 237640, [6] = 237634, [7] = 237636, [8] = 237639, [9] = 237633, [10] = 237638, [16] = 237632 }, -- Shaman
+        [8] = { [1] = 237718, [3] = 237716, [5] = 237721, [6] = 237715, [7] = 237717, [8] = 237720, [9] = 237714, [10] = 237719, [16] = 237713 }, -- Mage
+        [9] = { [1] = 237700, [3] = 237698, [5] = 237703, [6] = 237697, [7] = 237699, [8] = 237702, [9] = 237696, [10] = 237701, [16] = 237695 }, -- Warlock
+        [10] = { [1] = 237673, [3] = 237671, [5] = 237676, [6] = 237670, [7] = 237672, [8] = 237675, [9] = 237669, [10] = 237674, [16] = 237668 }, -- Monk
+        [11] = { [1] = 237682, [3] = 237680, [5] = 237685, [6] = 237679, [7] = 237681, [8] = 237684, [9] = 237678, [10] = 237683, [16] = 237677 }, -- Druid
+        [12] = { [1] = 237691, [3] = 237689, [5] = 237694, [6] = 237688, [7] = 237690, [8] = 237693, [9] = 237687, [10] = 237692, [16] = 237686 }, -- Demon Hunter
+        [13] = { [1] = 237655, [3] = 237653, [5] = 237658, [6] = 237652, [7] = 237654, [8] = 237657, [9] = 237651, [10] = 237656, [16] = 237650 }, -- Evoker
+    },
 }
 
 --- @type table<number, number> # [itemID] = seasonID
@@ -221,48 +308,181 @@ do
     end
 end
 
+local classCombo = {
+    dk_dh_lock = { [6] = true, [12] = true, [9] = true },
+    druid_hunter_mage = { [11] = true, [3] = true, [8] = true },
+    pala_priest_shaman = { [2] = true, [5] = true, [7] = true },
+    monk_rogue_warrior = { [10] = true, [4] = true, [1] = true },
+    evoker_monk_rogue_warrior = { [13] = true, [10] = true, [4] = true, [1] = true },
+}
 data.tokens = {
-    -- SL S4 (season 8)
-    [191010] = { season = 8, slot = Enum.InventoryType.IndexChestType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Chest Module
-    [191014] = { season = 8, slot = Enum.InventoryType.IndexHandType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Hand Module
-    [191005] = { season = 8, slot = Enum.InventoryType.IndexHeadType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Helm Module
-    [191018] = { season = 8, slot = Enum.InventoryType.IndexLegsType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Leg Module
-    [191006] = { season = 8, slot = Enum.InventoryType.IndexShoulderType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Shoulder Module
-    [191011] = { season = 8, slot = Enum.InventoryType.IndexChestType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Chest Module
-    [191015] = { season = 8, slot = Enum.InventoryType.IndexHandType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Hand Module
-    [191002] = { season = 8, slot = Enum.InventoryType.IndexHeadType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Helm Module
-    [191019] = { season = 8, slot = Enum.InventoryType.IndexLegsType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Leg Module
-    [191007] = { season = 8, slot = Enum.InventoryType.IndexShoulderType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Shoulder Module
-    [191012] = { season = 8, slot = Enum.InventoryType.IndexChestType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Chest Module
-    [191016] = { season = 8, slot = Enum.InventoryType.IndexHandType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Hand Module
-    [191003] = { season = 8, slot = Enum.InventoryType.IndexHeadType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Helm Module
-    [191020] = { season = 8, slot = Enum.InventoryType.IndexLegsType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Leg Module
-    [191008] = { season = 8, slot = Enum.InventoryType.IndexShoulderType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Shoulder Module
-    [191013] = { season = 8, slot = Enum.InventoryType.IndexChestType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Chest Module
-    [191017] = { season = 8, slot = Enum.InventoryType.IndexHandType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Hand Module
-    [191004] = { season = 8, slot = Enum.InventoryType.IndexHeadType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Helm Module
-    [191021] = { season = 8, slot = Enum.InventoryType.IndexLegsType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Leg Module
-    [191009] = { season = 8, slot = Enum.InventoryType.IndexShoulderType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Shoulder Module
+    -- SL S4
+    [191005] = { season = 8, slot = 1, classList = classCombo.dk_dh_lock }, -- Dreadful Helm Module
+    [191006] = { season = 8, slot = 3, classList = classCombo.dk_dh_lock }, -- Dreadful Shoulder Module
+    [191010] = { season = 8, slot = 5, classList = classCombo.dk_dh_lock }, -- Dreadful Chest Module
+    [191018] = { season = 8, slot = 7, classList = classCombo.dk_dh_lock }, -- Dreadful Leg Module
+    [191014] = { season = 8, slot = 10, classList = classCombo.dk_dh_lock }, -- Dreadful Hand Module
+    [191002] = { season = 8, slot = 1, classList = classCombo.druid_hunter_mage }, -- Mystic Helm Module
+    [191007] = { season = 8, slot = 3, classList = classCombo.druid_hunter_mage }, -- Mystic Shoulder Module
+    [191011] = { season = 8, slot = 5, classList = classCombo.druid_hunter_mage }, -- Mystic Chest Module
+    [191019] = { season = 8, slot = 7, classList = classCombo.druid_hunter_mage }, -- Mystic Leg Module
+    [191015] = { season = 8, slot = 10, classList = classCombo.druid_hunter_mage }, -- Mystic Hand Module
+    [191003] = { season = 8, slot = 1, classList = classCombo.pala_priest_shaman }, -- Venerated Helm Module
+    [191008] = { season = 8, slot = 3, classList = classCombo.pala_priest_shaman }, -- Venerated Shoulder Module
+    [191012] = { season = 8, slot = 5, classList = classCombo.pala_priest_shaman }, -- Venerated Chest Module
+    [191020] = { season = 8, slot = 7, classList = classCombo.pala_priest_shaman }, -- Venerated Leg Module
+    [191016] = { season = 8, slot = 10, classList = classCombo.pala_priest_shaman }, -- Venerated Hand Module
+    [191004] = { season = 8, slot = 1, classList = classCombo.monk_rogue_warrior }, -- Zenith Helm Module
+    [191009] = { season = 8, slot = 3, classList = classCombo.monk_rogue_warrior }, -- Zenith Shoulder Module
+    [191013] = { season = 8, slot = 5, classList = classCombo.monk_rogue_warrior }, -- Zenith Chest Module
+    [191021] = { season = 8, slot = 7, classList = classCombo.monk_rogue_warrior }, -- Zenith Leg Module
+    [191017] = { season = 8, slot = 10, classList = classCombo.monk_rogue_warrior }, -- Zenith Hand Module
+    -- DF S1
+    [196590] = { season = 9, slot = 1, classList = classCombo.dk_dh_lock }, -- Dreadful Topaz Forgestone
+    [196589] = { season = 9, slot = 3, classList = classCombo.dk_dh_lock }, -- Dreadful Lapis Forgestone
+    [196586] = { season = 9, slot = 5, classList = classCombo.dk_dh_lock }, -- Dreadful Amethyst Forgestone
+    [196588] = { season = 9, slot = 7, classList = classCombo.dk_dh_lock }, -- Dreadful Jade Forgestone
+    [196587] = { season = 9, slot = 10, classList = classCombo.dk_dh_lock }, -- Dreadful Garnet Forgestone
+    [196600] = { season = 9, slot = 1, classList = classCombo.druid_hunter_mage }, -- Mystic Topaz Forgestone
+    [196599] = { season = 9, slot = 3, classList = classCombo.druid_hunter_mage }, -- Mystic Lapis Forgestone
+    [196596] = { season = 9, slot = 5, classList = classCombo.druid_hunter_mage }, -- Mystic Amethyst Forgestone
+    [196598] = { season = 9, slot = 7, classList = classCombo.druid_hunter_mage }, -- Mystic Jade Forgestone
+    [196597] = { season = 9, slot = 10, classList = classCombo.druid_hunter_mage }, -- Mystic Garnet Forgestone
+    [196605] = { season = 9, slot = 1, classList = classCombo.pala_priest_shaman }, -- Venerated Topaz Forgestone
+    [196604] = { season = 9, slot = 3, classList = classCombo.pala_priest_shaman }, -- Venerated Lapis Forgestone
+    [196601] = { season = 9, slot = 5, classList = classCombo.pala_priest_shaman }, -- Venerated Amethyst Forgestone
+    [196603] = { season = 9, slot = 7, classList = classCombo.pala_priest_shaman }, -- Venerated Jade Forgestone
+    [196602] = { season = 9, slot = 10, classList = classCombo.pala_priest_shaman }, -- Venerated Garnet Forgestone
+    [196595] = { season = 9, slot = 1, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Topaz Forgestone
+    [196594] = { season = 9, slot = 3, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Lapis Forgestone
+    [196591] = { season = 9, slot = 5, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Amethyst Forgestone
+    [196593] = { season = 9, slot = 7, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Jade Forgestone
+    [196592] = { season = 9, slot = 10, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Garnet Forgestone
+    -- DF S2
+    [202627] = { season = 10, slot = 1, classList = classCombo.dk_dh_lock }, -- Dreadful Melting Fluid
+    [202621] = { season = 10, slot = 3, classList = classCombo.dk_dh_lock }, -- Dreadful Corrupting Fluid
+    [202631] = { season = 10, slot = 5, classList = classCombo.dk_dh_lock }, -- Dreadful Ventilation Fluid
+    [202634] = { season = 10, slot = 7, classList = classCombo.dk_dh_lock }, -- Dreadful Cooling Fluid
+    [202624] = { season = 10, slot = 10, classList = classCombo.dk_dh_lock }, -- Dreadful Mixing Fluid
+    [202628] = { season = 10, slot = 1, classList = classCombo.druid_hunter_mage }, -- Mystic Melting Fluid
+    [202622] = { season = 10, slot = 3, classList = classCombo.druid_hunter_mage }, -- Mystic Corrupting Fluid
+    [202632] = { season = 10, slot = 5, classList = classCombo.druid_hunter_mage }, -- Mystic Ventilation Fluid
+    [202635] = { season = 10, slot = 7, classList = classCombo.druid_hunter_mage }, -- Mystic Cooling Fluid
+    [202625] = { season = 10, slot = 10, classList = classCombo.druid_hunter_mage }, -- Mystic Mixing Fluid
+    [202629] = { season = 10, slot = 1, classList = classCombo.pala_priest_shaman }, -- Venerated Melting Fluid
+    [202623] = { season = 10, slot = 3, classList = classCombo.pala_priest_shaman }, -- Venerated Corrupting Fluid
+    [202633] = { season = 10, slot = 5, classList = classCombo.pala_priest_shaman }, -- Venerated Ventilation Fluid
+    [202636] = { season = 10, slot = 7, classList = classCombo.pala_priest_shaman }, -- Venerated Cooling Fluid
+    [202626] = { season = 10, slot = 10, classList = classCombo.pala_priest_shaman }, -- Venerated Mixing Fluid
+    [202630] = { season = 10, slot = 1, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Melting Fluid
+    [202637] = { season = 10, slot = 3, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Corrupting Fluid
+    [202639] = { season = 10, slot = 5, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Ventilation Fluid
+    [202640] = { season = 10, slot = 7, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Cooling Fluid
+    [202638] = { season = 10, slot = 10, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Mixing Fluid
+    -- DF S3
+    [207470] = { season = 11, slot = 1, classList = classCombo.dk_dh_lock }, -- Dreadful Blazing Dreamheart
+    [207478] = { season = 11, slot = 3, classList = classCombo.dk_dh_lock }, -- Dreadful Smoldering Dreamheart
+    [207462] = { season = 11, slot = 5, classList = classCombo.dk_dh_lock }, -- Dreadful Verdurous Dreamheart
+    [207474] = { season = 11, slot = 7, classList = classCombo.dk_dh_lock }, -- Dreadful Ashen Dreamheart
+    [207466] = { season = 11, slot = 10, classList = classCombo.dk_dh_lock }, -- Dreadful Tormented Dreamheart
+    [207471] = { season = 11, slot = 1, classList = classCombo.druid_hunter_mage }, -- Mystic Blazing Dreamheart
+    [207479] = { season = 11, slot = 3, classList = classCombo.druid_hunter_mage }, -- Mystic Smoldering Dreamheart
+    [207463] = { season = 11, slot = 5, classList = classCombo.druid_hunter_mage }, -- Mystic Verdurous Dreamheart
+    [207475] = { season = 11, slot = 7, classList = classCombo.druid_hunter_mage }, -- Mystic Ashen Dreamheart
+    [207467] = { season = 11, slot = 10, classList = classCombo.druid_hunter_mage }, -- Mystic Tormented Dreamheart
+    [207472] = { season = 11, slot = 1, classList = classCombo.pala_priest_shaman }, -- Venerated Blazing Dreamheart
+    [207480] = { season = 11, slot = 3, classList = classCombo.pala_priest_shaman }, -- Venerated Smoldering Dreamheart
+    [207464] = { season = 11, slot = 5, classList = classCombo.pala_priest_shaman }, -- Venerated Verdurous Dreamheart
+    [207476] = { season = 11, slot = 7, classList = classCombo.pala_priest_shaman }, -- Venerated Ashen Dreamheart
+    [207468] = { season = 11, slot = 10, classList = classCombo.pala_priest_shaman }, -- Venerated Tormented Dreamheart
+    [207473] = { season = 11, slot = 1, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Blazing Dreamheart
+    [207481] = { season = 11, slot = 3, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Smoldering Dreamheart
+    [207465] = { season = 11, slot = 5, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Verdurous Dreamheart
+    [207477] = { season = 11, slot = 7, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Ashen Dreamheart
+    [207469] = { season = 11, slot = 10, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Tormented Dreamheart
+    -- DF S4
+    [217324] = { season = 12, slot = 1, classList = classCombo.dk_dh_lock }, -- Dreadful Decelerating Chronograph
+    [217332] = { season = 12, slot = 3, classList = classCombo.dk_dh_lock }, -- Dreadful Synchronous Timestrand
+    [217316] = { season = 12, slot = 5, classList = classCombo.dk_dh_lock }, -- Dreadful Fleeting Hourglass
+    [217328] = { season = 12, slot = 7, classList = classCombo.dk_dh_lock }, -- Dreadful Ephemeral Hypersphere
+    [217320] = { season = 12, slot = 10, classList = classCombo.dk_dh_lock }, -- Dreadful Quickened Bronzestone
+    [217325] = { season = 12, slot = 1, classList = classCombo.druid_hunter_mage }, -- Mystic Decelerating Chronograph
+    [217333] = { season = 12, slot = 3, classList = classCombo.druid_hunter_mage }, -- Mystic Synchronous Timestrand
+    [217317] = { season = 12, slot = 5, classList = classCombo.druid_hunter_mage }, -- Mystic Fleeting Hourglass
+    [217329] = { season = 12, slot = 7, classList = classCombo.druid_hunter_mage }, -- Mystic Ephemeral Hypersphere
+    [217321] = { season = 12, slot = 10, classList = classCombo.druid_hunter_mage }, -- Mystic Quickened Bronzestone
+    [217326] = { season = 12, slot = 1, classList = classCombo.pala_priest_shaman }, -- Venerated Decelerating Chronograph
+    [217334] = { season = 12, slot = 3, classList = classCombo.pala_priest_shaman }, -- Venerated Synchronous Timestrand
+    [217318] = { season = 12, slot = 5, classList = classCombo.pala_priest_shaman }, -- Venerated Fleeting Hourglass
+    [217330] = { season = 12, slot = 7, classList = classCombo.pala_priest_shaman }, -- Venerated Ephemeral Hypersphere
+    [217322] = { season = 12, slot = 10, classList = classCombo.pala_priest_shaman }, -- Venerated Quickened Bronzestone
+    [217327] = { season = 12, slot = 1, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Decelerating Chronograph
+    [217335] = { season = 12, slot = 3, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Synchronous Timestrand
+    [217319] = { season = 12, slot = 5, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Fleeting Hourglass
+    [217331] = { season = 12, slot = 7, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Ephemeral Hypersphere
+    [217323] = { season = 12, slot = 10, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Quickened Bronzestone
+    -- TWW S1
+    [225622] = { season = 13, slot = 1, classList = classCombo.dk_dh_lock }, -- Dreadful Conniver's Badge
+    [225630] = { season = 13, slot = 3, classList = classCombo.dk_dh_lock }, -- Dreadful Obscenity's Idol
+    [225614] = { season = 13, slot = 5, classList = classCombo.dk_dh_lock }, -- Dreadful Blasphemer's Effigy
+    [225626] = { season = 13, slot = 7, classList = classCombo.dk_dh_lock }, -- Dreadful Slayer's Icon
+    [225618] = { season = 13, slot = 10, classList = classCombo.dk_dh_lock }, -- Dreadful Stalwart's Emblem
+    [225623] = { season = 13, slot = 1, classList = classCombo.druid_hunter_mage }, -- Mystic Conniver's Badge
+    [225631] = { season = 13, slot = 3, classList = classCombo.druid_hunter_mage }, -- Mystic Obscenity's Idol
+    [225615] = { season = 13, slot = 5, classList = classCombo.druid_hunter_mage }, -- Mystic Blasphemer's Effigy
+    [225627] = { season = 13, slot = 7, classList = classCombo.druid_hunter_mage }, -- Mystic Slayer's Icon
+    [225619] = { season = 13, slot = 10, classList = classCombo.druid_hunter_mage }, -- Mystic Stalwart's Emblem
+    [225624] = { season = 13, slot = 1, classList = classCombo.pala_priest_shaman }, -- Venerated Conniver's Badge
+    [225632] = { season = 13, slot = 3, classList = classCombo.pala_priest_shaman }, -- Venerated Obscenity's Idol
+    [225616] = { season = 13, slot = 5, classList = classCombo.pala_priest_shaman }, -- Venerated Blasphemer's Effigy
+    [225628] = { season = 13, slot = 7, classList = classCombo.pala_priest_shaman }, -- Venerated Slayer's Icon
+    [225620] = { season = 13, slot = 10, classList = classCombo.pala_priest_shaman }, -- Venerated Stalwart's Emblem
+    [225625] = { season = 13, slot = 1, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Conniver's Badge
+    [225633] = { season = 13, slot = 3, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Obscenity's Idol
+    [225617] = { season = 13, slot = 5, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Blasphemer's Effigy
+    [225629] = { season = 13, slot = 7, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Slayer's Icon
+    [225621] = { season = 13, slot = 10, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Stalwart's Emblem
     -- TWW S2
-    [228799] = { season = 14, slot = Enum.InventoryType.IndexChestType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Greased Gallybux
-    [228803] = { season = 14, slot = Enum.InventoryType.IndexHandType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Bloody Gallybux
-    [228807] = { season = 14, slot = Enum.InventoryType.IndexHeadType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Gilded Gallybux
-    [228811] = { season = 14, slot = Enum.InventoryType.IndexLegsType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Rusty Gallybux
-    [228815] = { season = 14, slot = Enum.InventoryType.IndexShoulderType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Polished Gallybux
-    [228800] = { season = 14, slot = Enum.InventoryType.IndexChestType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Greased Gallybux
-    [228804] = { season = 14, slot = Enum.InventoryType.IndexHandType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Bloody Gallybux
-    [228808] = { season = 14, slot = Enum.InventoryType.IndexHeadType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Gilded Gallybux
-    [228812] = { season = 14, slot = Enum.InventoryType.IndexLegsType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Rusty Gallybux
-    [228816] = { season = 14, slot = Enum.InventoryType.IndexShoulderType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Polished Gallybux
-    [228801] = { season = 14, slot = Enum.InventoryType.IndexChestType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Greased Gallybux
-    [228805] = { season = 14, slot = Enum.InventoryType.IndexHandType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Bloody Gallybux
-    [228809] = { season = 14, slot = Enum.InventoryType.IndexHeadType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Gilded Gallybux
-    [228813] = { season = 14, slot = Enum.InventoryType.IndexLegsType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Rusty Gallybux
-    [228817] = { season = 14, slot = Enum.InventoryType.IndexShoulderType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Polished Gallybux
-    [228802] = { season = 14, slot = Enum.InventoryType.IndexChestType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Greased Gallybux
-    [228806] = { season = 14, slot = Enum.InventoryType.IndexHandType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Bloody Gallybux
-    [228810] = { season = 14, slot = Enum.InventoryType.IndexHeadType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Gilded Gallybux
-    [228814] = { season = 14, slot = Enum.InventoryType.IndexLegsType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Rusty Gallybux
-    [228818] = { season = 14, slot = Enum.InventoryType.IndexShoulderType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Polished Gallybux
+    [228807] = { season = 14, slot = 1, classList = classCombo.dk_dh_lock }, -- Dreadful Gilded Gallybux
+    [228815] = { season = 14, slot = 3, classList = classCombo.dk_dh_lock }, -- Dreadful Polished Gallybux
+    [228799] = { season = 14, slot = 5, classList = classCombo.dk_dh_lock }, -- Dreadful Greased Gallybux
+    [228811] = { season = 14, slot = 7, classList = classCombo.dk_dh_lock }, -- Dreadful Rusty Gallybux
+    [228803] = { season = 14, slot = 10, classList = classCombo.dk_dh_lock }, -- Dreadful Bloody Gallybux
+    [228808] = { season = 14, slot = 1, classList = classCombo.druid_hunter_mage }, -- Mystic Gilded Gallybux
+    [228816] = { season = 14, slot = 3, classList = classCombo.druid_hunter_mage }, -- Mystic Polished Gallybux
+    [228800] = { season = 14, slot = 5, classList = classCombo.druid_hunter_mage }, -- Mystic Greased Gallybux
+    [228812] = { season = 14, slot = 7, classList = classCombo.druid_hunter_mage }, -- Mystic Rusty Gallybux
+    [228804] = { season = 14, slot = 10, classList = classCombo.druid_hunter_mage }, -- Mystic Bloody Gallybux
+    [228809] = { season = 14, slot = 1, classList = classCombo.pala_priest_shaman }, -- Venerated Gilded Gallybux
+    [228817] = { season = 14, slot = 3, classList = classCombo.pala_priest_shaman }, -- Venerated Polished Gallybux
+    [228801] = { season = 14, slot = 5, classList = classCombo.pala_priest_shaman }, -- Venerated Greased Gallybux
+    [228813] = { season = 14, slot = 7, classList = classCombo.pala_priest_shaman }, -- Venerated Rusty Gallybux
+    [228805] = { season = 14, slot = 10, classList = classCombo.pala_priest_shaman }, -- Venerated Bloody Gallybux
+    [228810] = { season = 14, slot = 1, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Gilded Gallybux
+    [228818] = { season = 14, slot = 3, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Polished Gallybux
+    [228802] = { season = 14, slot = 5, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Greased Gallybux
+    [228814] = { season = 14, slot = 7, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Rusty Gallybux
+    [228806] = { season = 14, slot = 10, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Bloody Gallybux
+    -- TWW S3
+    [237589] = { season = 15, slot = 1, classList = classCombo.dk_dh_lock }, -- Dreadful Foreboding Beaker
+    [237597] = { season = 15, slot = 3, classList = classCombo.dk_dh_lock }, -- Dreadful Yearning Cursemark
+    [237581] = { season = 15, slot = 5, classList = classCombo.dk_dh_lock }, -- Dreadful Voidglass Contaminant
+    [237593] = { season = 15, slot = 7, classList = classCombo.dk_dh_lock }, -- Dreadful Silken Offering
+    [237585] = { season = 15, slot = 10, classList = classCombo.dk_dh_lock }, -- Dreadful Binding Agent
+    [237590] = { season = 15, slot = 1, classList = classCombo.druid_hunter_mage }, -- Mystic Foreboding Beaker
+    [237598] = { season = 15, slot = 3, classList = classCombo.druid_hunter_mage }, -- Mystic Yearning Cursemark
+    [237582] = { season = 15, slot = 5, classList = classCombo.druid_hunter_mage }, -- Mystic Voidglass Contaminant
+    [237594] = { season = 15, slot = 7, classList = classCombo.druid_hunter_mage }, -- Mystic Silken Offering
+    [237586] = { season = 15, slot = 10, classList = classCombo.druid_hunter_mage }, -- Mystic Binding Agent
+    [237591] = { season = 15, slot = 1, classList = classCombo.pala_priest_shaman }, -- Venerated Foreboding Beaker
+    [237599] = { season = 15, slot = 3, classList = classCombo.pala_priest_shaman }, -- Venerated Yearning Cursemark
+    [237583] = { season = 15, slot = 5, classList = classCombo.pala_priest_shaman }, -- Venerated Voidglass Contaminant
+    [237595] = { season = 15, slot = 7, classList = classCombo.pala_priest_shaman }, -- Venerated Silken Offering
+    [237587] = { season = 15, slot = 10, classList = classCombo.pala_priest_shaman }, -- Venerated Binding Agent
+    [237592] = { season = 15, slot = 1, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Foreboding Beaker
+    [237600] = { season = 15, slot = 3, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Yearning Cursemark
+    [237584] = { season = 15, slot = 5, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Voidglass Contaminant
+    [237596] = { season = 15, slot = 7, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Silken Offering
+    [237588] = { season = 15, slot = 10, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Binding Agent
 };
 
