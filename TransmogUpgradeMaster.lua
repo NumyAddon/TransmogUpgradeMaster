@@ -111,6 +111,9 @@ EventUtil.ContinueOnAddOnLoaded(name, function()
 
     RunNextFrame(function()
         TUM:InitItemSourceMap()
+        EventUtil.ContinueOnAddOnLoaded('Blizzard_ItemInteractionUI', function()
+            hooksecurefunc(ItemInteractionFrame, 'InteractWithItem', function() TUM:HandleCatalystInteraction() end)
+        end)
     end)
 
     --- @param tooltip GameTooltip
@@ -727,4 +730,18 @@ function TUM:IsSetItemCollected(transmogSetID, slot)
     end
 
     return fromOtherItem and LEARNED_FROM_OTHER_ITEM or false
+end
+
+function TUM:HandleCatalystInteraction()
+    local isConversion = ItemInteractionFrame:GetInteractionType() == Enum.UIItemInteractionType.ItemConversion
+    local isFree = not ItemInteractionFrame:UsesCharges() and not ItemInteractionFrame:CostsCurrency()
+    if not isConversion then return end
+
+    local setting = self.db[settingKeys.autoConfirmCatalyst]
+    if
+        setting == self.Config.autoConfirmCatalystOptions.always
+        or (setting == self.Config.autoConfirmCatalystOptions.previousSeason and isFree)
+    then
+        ItemInteractionFrame:CompleteItemInteraction()
+    end
 end

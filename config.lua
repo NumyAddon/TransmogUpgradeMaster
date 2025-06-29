@@ -12,6 +12,12 @@ Config.modifierKeyOptions = {
     never = "never",
 };
 
+Config.autoConfirmCatalystOptions = {
+    never = "never",
+    previousSeason = "previousSeason",
+    always = "always",
+};
+
 Config.settingKeys = {
     hideWhenCollected = "hideWhenCollected",
     showCollectedModifierKey = "showCollectedModifierKey",
@@ -19,6 +25,7 @@ Config.settingKeys = {
     showUncollectedModifierKey = "showUncollectedModifierKey",
     showWarbandCatalystInfoModifierKey = "showWarbandCatalystInfoModifierKey",
     warbandCatalystClassList = "warbandCatalystClassList",
+    autoConfirmCatalyst = "autoConfirmCatalyst",
     debug = "debug",
 };
 
@@ -33,6 +40,7 @@ function Config:Init()
         [self.settingKeys.showUncollectedModifierKey] = self.modifierKeyOptions.always,
         [self.settingKeys.showWarbandCatalystInfoModifierKey] = self.modifierKeyOptions.shift,
         [self.settingKeys.warbandCatalystClassList] = {},
+        [self.settingKeys.autoConfirmCatalyst] = self.autoConfirmCatalystOptions.previousSeason,
     };
     for k, v in pairs(defaults) do
         if self.db[k] == nil then
@@ -59,6 +67,7 @@ function Config:Init()
         { text = "Alt", label = "While holding ALT", tooltip = "Only while holding Alt.", value = self.modifierKeyOptions.alt },
         { text = "Never", label = "Never", tooltip = "Never show.", value = self.modifierKeyOptions.never },
     };
+
 
     layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(
         "Display Transmog Collection Status in Tooltip",
@@ -91,6 +100,8 @@ function Config:Init()
         showModifierOptions,
         Settings.VarType.String
     );
+
+
     layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(
         "Warband Catalyst Info",
         "For warbound or BoE items, you can show the classes for which you can get an appearance by catalysing (and upgrading) the item."
@@ -131,7 +142,22 @@ function Config:Init()
             classCheckbox:AddShownPredicate(isExpanded);
         end
     end
+
+
     layout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Other Settings"));
+    self:MakeDropdown(
+        category,
+        "Auto Confirm Catalyst",
+        self.settingKeys.autoConfirmCatalyst,
+        defaults.autoConfirmCatalyst,
+        "Automatically confirm the popup window when you try to Catalyse an item.",
+        {
+            { text = "Never", label = "Never", tooltip = "Never auto-confirm.", value = self.autoConfirmCatalystOptions.never },
+            { text = "Previous Season", label = "Previous Season", tooltip = "Auto-confirm for items from previous seasons that are free.", value = self.autoConfirmCatalystOptions.previousSeason },
+            { text = "Always", label = "Always", tooltip = "Always auto-confirm, even if there are limited charges.", value = self.autoConfirmCatalystOptions.always },
+        },
+        Settings.VarType.String
+    )
     self:MakeCheckbox(
         category,
         "Debug Tooltip Info",
