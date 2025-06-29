@@ -209,7 +209,40 @@ data.catalystItems = {
     },
 }
 
+--- @type table<number, number> # [itemID] = seasonID
+data.catalystItemByID = {};
+do
+    for seasonID, classes in pairs(data.catalystItems) do
+        for _, slots in pairs(classes) do
+            for _, itemID in pairs(slots) do
+                data.catalystItemByID[itemID] = seasonID;
+            end
+        end
+    end
+end
+
 data.tokens = {
+    -- SL S4 (season 8)
+    [191010] = { season = 8, slot = Enum.InventoryType.IndexChestType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Chest Module
+    [191014] = { season = 8, slot = Enum.InventoryType.IndexHandType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Hand Module
+    [191005] = { season = 8, slot = Enum.InventoryType.IndexHeadType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Helm Module
+    [191018] = { season = 8, slot = Enum.InventoryType.IndexLegsType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Leg Module
+    [191006] = { season = 8, slot = Enum.InventoryType.IndexShoulderType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Shoulder Module
+    [191011] = { season = 8, slot = Enum.InventoryType.IndexChestType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Chest Module
+    [191015] = { season = 8, slot = Enum.InventoryType.IndexHandType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Hand Module
+    [191002] = { season = 8, slot = Enum.InventoryType.IndexHeadType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Helm Module
+    [191019] = { season = 8, slot = Enum.InventoryType.IndexLegsType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Leg Module
+    [191007] = { season = 8, slot = Enum.InventoryType.IndexShoulderType, classList = { [11] = true, [3] = true, [8] = true } }, -- Mystic Shoulder Module
+    [191012] = { season = 8, slot = Enum.InventoryType.IndexChestType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Chest Module
+    [191016] = { season = 8, slot = Enum.InventoryType.IndexHandType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Hand Module
+    [191003] = { season = 8, slot = Enum.InventoryType.IndexHeadType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Helm Module
+    [191020] = { season = 8, slot = Enum.InventoryType.IndexLegsType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Leg Module
+    [191008] = { season = 8, slot = Enum.InventoryType.IndexShoulderType, classList = { [2] = true, [5] = true, [7] = true } }, -- Venerated Shoulder Module
+    [191013] = { season = 8, slot = Enum.InventoryType.IndexChestType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Chest Module
+    [191017] = { season = 8, slot = Enum.InventoryType.IndexHandType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Hand Module
+    [191004] = { season = 8, slot = Enum.InventoryType.IndexHeadType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Helm Module
+    [191021] = { season = 8, slot = Enum.InventoryType.IndexLegsType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Leg Module
+    [191009] = { season = 8, slot = Enum.InventoryType.IndexShoulderType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Shoulder Module
     -- TWW S2
     [228799] = { season = 14, slot = Enum.InventoryType.IndexChestType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Greased Gallybux
     [228803] = { season = 14, slot = Enum.InventoryType.IndexHandType, classList = { [6] = true, [12] = true, [9] = true } }, -- Dreadful Bloody Gallybux
@@ -232,16 +265,4 @@ data.tokens = {
     [228814] = { season = 14, slot = Enum.InventoryType.IndexLegsType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Rusty Gallybux
     [228818] = { season = 14, slot = Enum.InventoryType.IndexShoulderType, classList = { [13] = true, [10] = true, [4] = true, [1] = true } }, -- Zenith Polished Gallybux
 };
-
---- @type table<number, number> # [itemID] = seasonID
-data.catalystItemByID = {};
-do
-    for seasonID, classes in pairs(data.catalystItems) do
-        for _, slots in pairs(classes) do
-            for _, itemID in pairs(slots) do
-                data.catalystItemByID[itemID] = seasonID;
-            end
-        end
-    end
-end
 
