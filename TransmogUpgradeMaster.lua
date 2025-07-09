@@ -481,7 +481,7 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
 
     local isCatalysed = self:IsItemCatalysed(itemID)
     tryInsert(debugLines, 'isCatalysed: ' .. tostring(isCatalysed))
-    canCatalyse = tokenInfo or (not isCatalysed and not isConquestPvpItem and self:IsCatalystSlot(itemSlot) and self:IsValidArmorTypeForClass(itemLink, classID))
+    canCatalyse = tokenInfo or (seasonID and not isCatalysed and not isConquestPvpItem and self:IsCatalystSlot(itemSlot) and self:IsValidArmorTypeForClass(itemLink, classID))
     if canCatalyse then
         local catalystCollected, catalystUpgradeCollected
         local playerSets = self:GetSetsForClass(classID, seasonID)
