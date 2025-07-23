@@ -59,13 +59,14 @@ function Config:Init()
     end
 
     local category, layout = Settings.RegisterVerticalLayoutCategory("Transmog Upgrade Master");
+    self.category = category;
 
     local showModifierOptions = {
-        { text = "Always", label = "Always", tooltip = "Always show.", value = self.modifierKeyOptions.always },
-        { text = "Shift", label = "While holding SHIFT", tooltip = "Only while holding Shift.", value = self.modifierKeyOptions.shift },
-        { text = "Ctrl", label = "While holding CTRL", tooltip = "Only while holding Ctrl.", value = self.modifierKeyOptions.ctrl },
-        { text = "Alt", label = "While holding ALT", tooltip = "Only while holding Alt.", value = self.modifierKeyOptions.alt },
-        { text = "Never", label = "Never", tooltip = "Never show.", value = self.modifierKeyOptions.never },
+        { text = "Always", label = "Always",              tooltip = "Always show.",              value = self.modifierKeyOptions.always, },
+        { text = "Shift",  label = "While holding SHIFT", tooltip = "Only while holding Shift.", value = self.modifierKeyOptions.shift, },
+        { text = "Ctrl",   label = "While holding CTRL",  tooltip = "Only while holding Ctrl.",  value = self.modifierKeyOptions.ctrl, },
+        { text = "Alt",    label = "While holding ALT",   tooltip = "Only while holding Alt.",   value = self.modifierKeyOptions.alt, },
+        { text = "Never",  label = "Never",               tooltip = "Never show.",               value = self.modifierKeyOptions.never, },
     };
 
 
@@ -116,7 +117,7 @@ function Config:Init()
         Settings.VarType.String
     );
     do
-        local expandInitializer, isExpanded = self:MakeExpandableSection("Displayed Classes", 25, 0)
+        local expandInitializer, isExpanded = self:MakeExpandableSection("Displayed Classes")
 
         local function isVisible()
             return self.db[self.settingKeys.showWarbandCatalystInfoModifierKey] ~= self.modifierKeyOptions.never;
@@ -152,9 +153,9 @@ function Config:Init()
         defaults.autoConfirmCatalyst,
         "Automatically confirm the popup window when you try to Catalyse an item.",
         {
-            { text = "Never", label = "Never", tooltip = "Never auto-confirm.", value = self.autoConfirmCatalystOptions.never },
-            { text = "Previous Season", label = "Previous Season", tooltip = "Auto-confirm for items from previous seasons that are free.", value = self.autoConfirmCatalystOptions.previousSeason },
-            { text = "Always", label = "Always", tooltip = "Always auto-confirm, even if there are limited charges.", value = self.autoConfirmCatalystOptions.always },
+            { text = "Never",           label = "Never",           tooltip = "Never auto-confirm.",                                         value = self.autoConfirmCatalystOptions.never, },
+            { text = "Previous Season", label = "Previous Season", tooltip = "Auto-confirm for items from previous seasons that are free.", value = self.autoConfirmCatalystOptions.previousSeason, },
+            { text = "Always",          label = "Always",          tooltip = "Always auto-confirm, even if there are limited charges.",     value = self.autoConfirmCatalystOptions.always, },
         },
         Settings.VarType.String
     )
@@ -179,13 +180,11 @@ function Config:Init()
 
     Settings.RegisterAddOnCategory(category)
 
-    SLASH_TRANSMOG_UPGRADE_MASTER1 = "/tum";
-    SLASH_TRANSMOG_UPGRADE_MASTER2 = "/transmogupgrademaster";
-    SlashCmdList["TRANSMOG_UPGRADE_MASTER"] = function()
-        Settings.OpenToCategory(category:GetID());
-    end
-
     return self.db;
+end
+
+function Config:OpenSettings()
+    Settings.OpenToCategory(self.category:GetID());
 end
 
 local settingPrefix = name .. "_";
@@ -202,7 +201,7 @@ function Config:MakeCheckbox(category, label, settingKey, defaultValue, tooltip,
         Settings.VarType.Boolean,
         label,
         defaultValue
-     );
+    );
     setting:SetValueChangedCallback(function(setting, value) self:OnSettingChange(setting:GetVariable(), value) end);
 
     return Settings.CreateCheckbox(category, setting, tooltip);

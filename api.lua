@@ -33,9 +33,28 @@ end
 --- @return boolean? catalystAppearanceMissing # true if the item will teach a new appearance when catalysed
 --- @return boolean? catalystUpgradeAppearanceMissing # true if the item will teach a new appearance when catalysed AND upgraded to the next tier
 --- @return boolean? upgradeAppearanceMissing # true if the item will teach a new appearance when upgraded to the next tier
---- @return boolean upgradeAppearanceLearnedFromOtherItem # true if the appearance is learned from another item
+--- @return boolean catalystAppearanceLearnedFromOtherItem # true if the appearance is learned from another item
 --- @return boolean catalystUpgradeAppearanceLearnedFromOtherItem # true if the appearance is learned from another item
 --- @return boolean upgradeAppearanceLearnedFromOtherItem # true if the appearance is learned from another item
 function api.IsAppearanceMissing(itemLink, classID)
+    local result = TUM:IsAppearanceMissing(itemLink, classID)
+
+    return
+        result.canCatalyse,
+        result.canUpgrade,
+        result.catalystAppearanceMissing,
+        result.catalystUpgradeAppearanceMissing,
+        result.upgradeAppearanceMissing,
+        result.catalystAppearanceLearnedFromOtherItem,
+        result.catalystUpgradeAppearanceLearnedFromOtherItem,
+        result.upgradeAppearanceLearnedFromOtherItem
+end
+
+--- Identical to IsAppearanceMissing, but returns a table instead
+--- @see api.IsAppearanceMissing
+--- @param itemLink string
+--- @param classID number? # defaults to the player's class
+--- @return TUM_AppearanceMissingResult result
+function api.GetAppearanceMissingData(itemLink, classID)
     return TUM:IsAppearanceMissing(itemLink, classID)
 end
