@@ -598,12 +598,6 @@ local function checkResult(scanResult, classID, seasonID)
     if characterInfo then
         scanClassFile = characterInfo.details.className;
     end
-    if scanResult.source.character and scanResult.isBound and isSyndicatorLoaded then
-        --- @type SyndicatorCharacterData?
-        if not characterInfo or characterInfo.details.class ~= classID then
-            return; -- item is bound, and the location is a character of the wrong class
-        end
-    end
 
     local isToken = scanResult.itemID and TUM:IsToken(scanResult.itemID)
     local tokenInfo = isToken and TUM:GetTokenInfo(scanResult.itemID, scanResult.itemLink)
@@ -620,6 +614,13 @@ local function checkResult(scanResult, classID, seasonID)
     local isItemCatalysed = TUM:IsItemCatalysed(scanResult.itemID);
     if isItemCatalysed and TUM.data.catalystItems[seasonID][classID][itemSlot] ~= scanResult.itemID then
         return;
+    end
+
+    if not isItemCatalysed and scanResult.source.character and scanResult.isBound and isSyndicatorLoaded then
+        --- @type SyndicatorCharacterData?
+        if not characterInfo or characterInfo.details.class ~= classID then
+            return; -- item is bound, and the location is a character of the wrong class
+        end
     end
 
     local tumResult = TUM:IsAppearanceMissing(scanResult.itemLink, classID);
