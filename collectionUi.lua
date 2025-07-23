@@ -676,6 +676,9 @@ end
 
 --- @param result SyndicatorSearchResult
 local function handleResult(result)
+    if LinkUtil.ExtractLink(result.itemLink) ~= 'item' then
+        return;
+    end
     local item = Item:CreateFromItemLink(result.itemLink);
     item:ContinueOnItemLoad(function()
         local info, upgradeInfo = checkResult(result, UI.currentClass, UI.currentSeason);
