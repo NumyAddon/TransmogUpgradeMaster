@@ -21,7 +21,7 @@ local OK_MARKUP = "|TInterface\\RaidFrame\\ReadyCheck-Ready:0|t"
 local NOK_MARKUP = "|TInterface\\RaidFrame\\ReadyCheck-NotReady:0|t"
 local OTHER_MARKUP = CreateAtlasMarkup('QuestRepeatableTurnin', 14, 16)
 
-local playerClass = select(3, UnitClass('player'));
+local playerClassFile, playerClassID = select(2, UnitClass('player'));
 local playerFullName;
 
 --- @class TransmogUpgradeMaster_CollectionUI: Frame, ButtonFrameTemplate
@@ -37,7 +37,7 @@ RunNextFrame(function()
             SEASON_NAMES[seasonID] = nil;
         end
     end
-    UI.currentClass = playerClass;
+    UI.currentClass = playerClassID;
 
     --- @type nil|table<Enum.InventoryType, table<TUM_Tier, TUM_UI_ResultData[]>>
     UI.results = nil;
@@ -593,11 +593,14 @@ local function checkResult(scanResult, classID, seasonID)
         return;
     end
 
+    local scanClassFile = playerClassFile;
+    local characterInfo = isSyndicatorLoaded and Syndicator.API.GetCharacter(scanResult.source.character);
+    if characterInfo then
+        scanClassFile = characterInfo.details.className;
+    end
     if scanResult.source.character and scanResult.isBound and isSyndicatorLoaded then
         --- @type SyndicatorCharacterData?
-        local characterInfo = Syndicator.API.GetCharacter(scanResult.source.character)
-        local classInfo = C_CreatureInfo.GetClassInfo(classID)
-        if not characterInfo or not classInfo or characterInfo.details.class ~= classInfo.classFile then
+        if not characterInfo or characterInfo.details.class ~= classID then
             return; -- item is bound, and the location is a character of the wrong class
         end
     end
@@ -624,10 +627,15 @@ local function checkResult(scanResult, classID, seasonID)
     local location;
     local sortPriority = 0;
     if scanResult.source.character then
-        location = scanResult.source.character .. ': ' .. scanResult.source.container;
+        local classColor = C_ClassColor.GetClassColor(scanClassFile)
+        location = string.format(
+            '%s: %s',
+            classColor:WrapTextInColorCode(scanResult.source.character),
+            scanResult.source.container
+        );
         sortPriority = scanResult.source.character == playerFullName and 1000 or 10;
     elseif scanResult.source.warband then
-        location = 'Warband bank';
+        location = CreateAtlasMarkup('warbands-icon', 17, 13) .. ' Warband bank';
         sortPriority = 100 + scanResult.source.warband;
     end
 

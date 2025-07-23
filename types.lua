@@ -41,4 +41,5 @@
 --- @field details SyndicatorCharacterDetails
 
 --- @class SyndicatorCharacterDetails
---- @field class ClassFile
+--- @field class number # classID
+--- @field className ClassFile
