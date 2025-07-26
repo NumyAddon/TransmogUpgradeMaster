@@ -4,6 +4,7 @@ local name, ns = ...;
 local Config = {}
 ns.Config = Config;
 
+--- @enum TUM_Config_ModifierKeyOptions
 Config.modifierKeyOptions = {
     always = "always",
     shift = "shift",
@@ -12,6 +13,7 @@ Config.modifierKeyOptions = {
     never = "never",
 };
 
+--- @enum TUM_Config_AutoConfirmCatalystOptions
 Config.autoConfirmCatalystOptions = {
     never = "never",
     previousSeason = "previousSeason",
@@ -27,34 +29,47 @@ Config.settingKeys = {
     warbandCatalystClassList = "warbandCatalystClassList",
     autoConfirmCatalyst = "autoConfirmCatalyst",
     debug = "debug",
+    UI_treatOtherItemAsCollected = "UI_treatOtherItemAsCollected",
 };
 
+--- @return TUM_DB
 function Config:Init()
+    --- @class TUM_DB
+    local defaults = {
+        --- @type boolean
+        hideWhenCollected = false,
+        --- @type boolean
+        debug = false,
+        --- @type TUM_Config_ModifierKeyOptions
+        showCollectedModifierKey = self.modifierKeyOptions.always,
+        --- @type TUM_Config_ModifierKeyOptions
+        showCollectedFromOtherItemModifierKey = self.modifierKeyOptions.always,
+        --- @type TUM_Config_ModifierKeyOptions
+        showUncollectedModifierKey = self.modifierKeyOptions.always,
+        --- @type TUM_Config_ModifierKeyOptions
+        showWarbandCatalystInfoModifierKey = self.modifierKeyOptions.shift,
+        --- @type table<number, boolean> # [classID] = true/false
+        warbandCatalystClassList = {},
+        --- @type TUM_Config_AutoConfirmCatalystOptions
+        autoConfirmCatalyst = self.autoConfirmCatalystOptions.previousSeason,
+        --- @type boolean
+        UI_treatOtherItemAsCollected = false,
+    };
     TransmogUpgradeMasterDB = TransmogUpgradeMasterDB or {};
     self.db = TransmogUpgradeMasterDB;
-    local defaults = {
-        [self.settingKeys.hideWhenCollected] = false,
-        [self.settingKeys.debug] = false,
-        [self.settingKeys.showCollectedModifierKey] = self.modifierKeyOptions.always,
-        [self.settingKeys.showCollectedFromOtherItemModifierKey] = self.modifierKeyOptions.always,
-        [self.settingKeys.showUncollectedModifierKey] = self.modifierKeyOptions.always,
-        [self.settingKeys.showWarbandCatalystInfoModifierKey] = self.modifierKeyOptions.shift,
-        [self.settingKeys.warbandCatalystClassList] = {},
-        [self.settingKeys.autoConfirmCatalyst] = self.autoConfirmCatalystOptions.previousSeason,
-    };
     for k, v in pairs(defaults) do
         if self.db[k] == nil then
-            if k == self.settingKeys.showCollectedFromOtherItemModifierKey then
-                self.db[k] = (self.db[self.settingKeys.showUncollectedModifierKey] or v);
+            if k == "showCollectedFromOtherItemModifierKey" then
+                self.db[k] = (self.db.showUncollectedModifierKey or v);
             else
                 self.db[k] = v;
             end
         end
     end
     for classID = 1, GetNumClasses() do
-        defaults[self.settingKeys.warbandCatalystClassList][classID] = true;
-        if self.db[self.settingKeys.warbandCatalystClassList][classID] == nil then
-            self.db[self.settingKeys.warbandCatalystClassList][classID] = true;
+        defaults.warbandCatalystClassList[classID] = true;
+        if self.db.warbandCatalystClassList[classID] == nil then
+            self.db.warbandCatalystClassList[classID] = true;
         end
     end
 
@@ -120,7 +135,7 @@ function Config:Init()
         local expandInitializer, isExpanded = self:MakeExpandableSection("Displayed Classes")
 
         local function isVisible()
-            return self.db[self.settingKeys.showWarbandCatalystInfoModifierKey] ~= self.modifierKeyOptions.never;
+            return self.db.showWarbandCatalystInfoModifierKey ~= self.modifierKeyOptions.never;
         end
         expandInitializer:AddShownPredicate(isVisible);
         layout:AddInitializer(expandInitializer);
@@ -134,9 +149,9 @@ function Config:Init()
                 category,
                 label,
                 classID,
-                defaults[self.settingKeys.warbandCatalystClassList][classID],
+                defaults.warbandCatalystClassList[classID],
                 tooltip:format(classColor:WrapTextInColorCode(className)),
-                self.db[self.settingKeys.warbandCatalystClassList]
+                self.db.warbandCatalystClassList
             );
             classCheckbox:SetParentInitializer(showWarbandInfo, isVisible);
             classCheckbox:AddShownPredicate(isVisible);
@@ -176,6 +191,19 @@ function Config:Init()
             TUM:InitItemSourceMap()
         end,
         "Reset the Transmog cache. This will cause the addon to re-cache all items, which may take a minute or so. This can fix rare situations when transmog changes are hotfixed in by blizzard."
+    )
+
+    self:MakeButton(
+        category,
+        layout,
+        "Open Collections UI",
+        function()
+            TUM.UI:ToggleUI();
+        end,
+        string.format(
+            "Open the Collections UI, you can also type %s in chat, or click on the Addon Compartment button to open this UI.",
+            GREEN_FONT_COLOR:WrapTextInColorCode("/tum")
+        )
     )
 
     Settings.RegisterAddOnCategory(category)
@@ -279,10 +307,6 @@ end
 --- @class TransmogUpgradeMaster_SettingsButtonControlMixin : SettingsControlMixin
 TransmogUpgradeMaster_SettingsButtonControlMixin = CreateFromMixins(SettingsControlMixin);
 do
-    local function InitializeSettingTooltip(initializer)
-        Settings.InitTooltip(initializer:GetName(), initializer:GetTooltip());
-    end
-
     local mixin = TransmogUpgradeMaster_SettingsButtonControlMixin;
     function mixin:OnLoad()
         SettingsControlMixin.OnLoad(self);
@@ -297,8 +321,9 @@ do
         self.Button:SetText(self.data.buttonText);
         self.Button:SetScript("OnClick", self.data.OnButtonClick);
         self.Button:SetScript("OnEnter", function(button)
-            GameTooltip:SetOwner(button, "ANCHOR_RIGHT");
-            InitializeSettingTooltip(initializer);
+            GameTooltip:SetOwner(button, "ANCHOR_TOP");
+            GameTooltip_AddHighlightLine(GameTooltip, initializer:GetName());
+            GameTooltip_AddNormalLine(GameTooltip, initializer:GetTooltip());
             GameTooltip:Show();
         end);
         self.Button:SetScript("OnLeave", function() GameTooltip:Hide(); end);

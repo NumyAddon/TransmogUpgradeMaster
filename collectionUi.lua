@@ -72,6 +72,60 @@ function UI:Init()
         titleBar:SetPoint('BOTTOMRIGHT', self, 'TOPRIGHT', 0, -32);
     end
 
+    local settings = CreateFrame('DropdownButton', nil, self);
+    self.Settings = settings;
+    do
+        settings:SetFrameStrata('HIGH');
+        settings:SetPoint('RIGHT', self.TitleBar, 'RIGHT', -20, 3);
+        settings:SetSize(32, 32);
+        do -- icon
+            settings.atlasKey = 'GM-icon-settings';
+            settings:SetNormalAtlas(settings.atlasKey);
+            Mixin(settings, ButtonStateBehaviorMixin);
+            function settings:OnButtonStateChanged()
+                local atlas = self.atlasKey;
+                if self:IsDownOver() or self:IsOver() then
+                    atlas = atlas .. '-hover';
+                elseif self:IsDown() then
+                    atlas = atlas .. '-pressed';
+                end
+
+                self:GetNormalTexture():SetAtlas(atlas, TextureKitConstants.IgnoreAtlasSize);
+            end
+
+            settings:OnLoad();
+            settings:HookScript('OnEnter', settings.OnEnter);
+            settings:HookScript('OnLeave', settings.OnLeave);
+            settings:HookScript('OnMouseDown', settings.OnMouseDown);
+            settings:HookScript('OnMouseUp', settings.OnMouseUp);
+        end
+
+        settings:HookScript('OnEnter', function()
+            GameTooltip:SetOwner(settings, 'ANCHOR_TOPRIGHT');
+            GameTooltip:SetText('Settings');
+            GameTooltip_AddInstructionLine(GameTooltip, CreateAtlasMarkup('NPE_LeftClick', 18, 18) .. ' to open settings');
+            GameTooltip:Show();
+        end);
+        settings:HookScript('OnLeave', function()
+            GameTooltip:Hide();
+        end);
+        --- @param rootDescription RootMenuDescriptionProxy
+        settings:SetupMenu(function(_, rootDescription)
+            rootDescription:CreateButton(CreateAtlasMarkup('GM-icon-settings', 20, 20) .. ' Open General TUM Settings', function() TUM.Config:OpenSettings(); end);
+            rootDescription:CreateTitle('Collection UI Settings');
+            rootDescription:CreateCheckbox(
+                'Treat "From Another Item" as collected',
+                function()
+                    return TUM.db.UI_treatOtherItemAsCollected;
+                end,
+                function()
+                    TUM.db.UI_treatOtherItemAsCollected = not TUM.db.UI_treatOtherItemAsCollected;
+                    UI.deferNewResult = true;
+                end
+            );
+        end);
+    end
+
     local classDropdown = CreateFrame('DropdownButton', nil, self, 'WowStyle1DropdownTemplate');
     self.classDropdown = classDropdown;
     do
@@ -278,10 +332,6 @@ function UI:Init()
             headers:SetHeight(1);
             headers.Background:Hide();
             headers.TopTileStreaks:Hide();
-            --[[
-                Future ideas:
-                - Add a spyglass icon to the header, clicking it will open Dressing Room showing the relevant item set
-            --]]
 
             local magnifyingGlassAtlas = 'common-search-magnifyingglass'
 
@@ -337,10 +387,7 @@ function UI:Init()
         self.rows = {};
         --- @param column TUM_UI_Column
         local function OnEnter(column)
-            --[[
-                Future ideas:
-                - Add a model viewer to the tooltip, to show the item appearance
-            --]]
+            if column.isCollected then return; end
             GameTooltip:SetOwner(column, 'ANCHOR_CURSOR_RIGHT');
             GameTooltip:AddLine('Transmog Upgrade Master');
             if column.results and next(column.results) then
@@ -393,6 +440,8 @@ function UI:Init()
                 column.slot = slot;
                 --- @type nil|TUM_UI_ResultData[]
                 column.results = nil; -- will be filled later when results are available
+                --- @type boolean|'learnedFromOtherItem'|nil
+                column.isCollected = nil;
 
                 if j ~= 1 then
                     column:SetScript('OnEnter', OnEnter)
@@ -422,6 +471,10 @@ function UI:Init()
             syndicatorMessage:SetWidth(350);
         end
     end
+end
+
+function UI:ToggleUI()
+    self:SetShown(not self:IsShown());
 end
 
 function UI:RegisterIntoBlizzMove()
@@ -482,6 +535,9 @@ function UI:OnUpdate()
                     local results = self.results and self.results[slot] and self.results[slot][tier];
                     column.results = results;
                     column.isCollected = TUM:IsCatalystItemCollected(self.currentSeason, self.currentClass, slot, tier);
+                    if TUM.db.UI_treatOtherItemAsCollected and 'learnedFromOtherItem' == column.isCollected then
+                        column.isCollected = true;
+                    end
 
                     column.Text:ClearPointsOffset()
                     if true == column.isCollected then

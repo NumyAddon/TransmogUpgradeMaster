@@ -12,7 +12,6 @@ ns.core = TUM
 TUM.data = ns.data
 --- @type TransmogUpgradeMasterConfig
 TUM.Config = ns.Config
-local settingKeys = TUM.Config.settingKeys
 
 --- @alias TUM_LearnedFromOtherItem "learnedFromOtherItem"
 local LEARNED_FROM_OTHER_ITEM = 'learnedFromOtherItem'
@@ -72,14 +71,14 @@ EventUtil.ContinueOnAddOnLoaded(name, function()
             return;
         end
 
-        TUM.UI:SetShown(not TUM.UI:IsShown());
+        TUM.UI:ToggleUI();
     end
 end)
 
 do
     function TransmogUpgradeMaster_OnAddonCompartmentClick(_, mouseButton)
         if mouseButton == 'LeftButton' then
-            TUM.UI:SetShown(not TUM.UI:IsShown());
+            TUM.UI:ToggleUI();
         else
             TUM.Config:OpenSettings();
         end
@@ -296,9 +295,9 @@ local modifierFunctions = {
 --- @param isCollected boolean
 function TUM:AddTooltipLine(tooltip, text, isCollected, fromOtherItem)
     local modifierSetting =
-        (isCollected and self.db[settingKeys.showCollectedModifierKey])
-        or (fromOtherItem and self.db[settingKeys.showCollectedFromOtherItemModifierKey])
-        or (self.db[settingKeys.showUncollectedModifierKey])
+        (isCollected and self.db.showCollectedModifierKey)
+        or (fromOtherItem and self.db.showCollectedFromOtherItemModifierKey)
+        or (self.db.showUncollectedModifierKey)
     local modifierFunction = modifierFunctions[modifierSetting]
     if not modifierFunction or not modifierFunction() then
         return
@@ -313,7 +312,7 @@ end
 --- @param tooltip GameTooltip
 --- @param text string
 function TUM:AddDebugLine(tooltip, text)
-    if not self.db[settingKeys.debug] then return end
+    if not self.db.debug then return end
 
     tooltip:AddDoubleLine('<TUM Debug>', text, 1, 0.5, 0, 1, 1, 1)
 end
@@ -561,11 +560,11 @@ function TUM:HandleTooltip(tooltip, tooltipData)
         end
     end
 
-    if modifierFunctions[self.db[settingKeys.showWarbandCatalystInfoModifierKey]]() and self:CanSendItemToAlt(itemLink, tooltipData) then
+    if modifierFunctions[self.db.showWarbandCatalystInfoModifierKey]() and self:CanSendItemToAlt(itemLink, tooltipData) then
         local catalystClassList = {}
         local catalystUpgradeClassList = {}
         for classID = 1, GetNumClasses() do
-            if classID ~= playerClassID and self.db[settingKeys.warbandCatalystClassList][classID] then
+            if classID ~= playerClassID and self.db.warbandCatalystClassList[classID] then
                 local classResult = self:IsAppearanceMissing(itemLink, classID)
                 if classResult.catalystAppearanceMissing then
                     table.insert(catalystClassList, classID)
@@ -709,7 +708,7 @@ function TUM:HandleCatalystInteraction()
     local isFree = not ItemInteractionFrame:UsesCharges() and not ItemInteractionFrame:CostsCurrency()
     if not isConversion then return end
 
-    local setting = self.db[settingKeys.autoConfirmCatalyst]
+    local setting = self.db.autoConfirmCatalyst
     if
         setting == self.Config.autoConfirmCatalystOptions.always
         or (setting == self.Config.autoConfirmCatalystOptions.previousSeason and isFree)
