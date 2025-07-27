@@ -28,7 +28,7 @@ local playerFullName;
 local UI = CreateFrame('Frame', 'TransmogUpgradeMaster_CollectionUI', UIParent, 'ButtonFrameTemplate');
 ns.UI = UI;
 
-RunNextFrame(function()
+EventUtil.ContinueOnAddOnLoaded(addonName, function()
     playerFullName = UnitNameUnmodified('player') .. '-' .. GetRealmName();
 
     UI.currentSeason = TUM.currentSeason
