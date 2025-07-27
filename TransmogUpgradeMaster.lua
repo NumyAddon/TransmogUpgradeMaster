@@ -45,8 +45,21 @@ EventUtil.ContinueOnAddOnLoaded(name, function()
     --- @type TransmogUpgradeMaster_CollectionUI
     TUM.UI = ns.UI
     TUM.db = TUM.Config:Init()
+    TUM.UI:Init()
     local currentSeason = C_MythicPlus.GetCurrentSeason()
-    TUM.currentSeason = (currentSeason and currentSeason > 0) and currentSeason or TUM.data.currentSeason
+    if currentSeason and currentSeason > 0 then
+        TUM.currentSeason = (currentSeason and currentSeason > 0) and currentSeason or TUM.data.currentSeason
+        TUM.UI:InitSeason(TUM.currentSeason)
+    else
+        RunNextFrame(function()
+            C_MythicPlus.RequestMapInfo()
+        end)
+        EventUtil.RegisterOnceFrameEventAndCallback('CHALLENGE_MODE_MAPS_UPDATE', function()
+            local currentSeason = C_MythicPlus.GetCurrentSeason()
+            TUM.currentSeason = (currentSeason and currentSeason > 0) and currentSeason or TUM.data.currentSeason
+            TUM.UI:InitSeason(TUM.currentSeason)
+        end)
+    end
 
     RunNextFrame(function()
         TUM:InitItemSourceMap()

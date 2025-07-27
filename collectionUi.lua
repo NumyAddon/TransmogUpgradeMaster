@@ -28,24 +28,32 @@ local playerFullName;
 local UI = CreateFrame('Frame', 'TransmogUpgradeMaster_CollectionUI', UIParent, 'ButtonFrameTemplate');
 ns.UI = UI;
 
-EventUtil.ContinueOnAddOnLoaded(addonName, function()
+function UI:Init()
     playerFullName = UnitNameUnmodified('player') .. '-' .. GetRealmName();
 
-    UI.currentSeason = TUM.currentSeason
+    self.selectedClass = playerClassID;
+    self.selectedSeason = TUM.currentSeason;
+    self.currentCurrencyID = 0; -- will be set later when the season is initialized
+
+    --- @type nil|table<Enum.InventoryType, table<TUM_Tier, TUM_UI_ResultData[]>>
+    self.results = nil;
+    self:BuildUI();
+    self:RegisterIntoBlizzMove();
+end
+
+function UI:InitSeason(currentSeasonID)
+    self.selectedSeason = currentSeasonID;
     for seasonID, _ in pairs(SEASON_NAMES) do
-        if seasonID > UI.currentSeason then
+        if seasonID > UI.selectedSeason then
             SEASON_NAMES[seasonID] = nil;
         end
     end
-    UI.currentClass = playerClassID;
 
-    --- @type nil|table<Enum.InventoryType, table<TUM_Tier, TUM_UI_ResultData[]>>
-    UI.results = nil;
-    UI:Init();
-    UI:RegisterIntoBlizzMove();
-end);
+    self.currentCurrencyID = TUM.data.currency[currentSeasonID] or 0;
+    self.Currency:UpdateText();
+end
 
-function UI:Init()
+function UI:BuildUI()
     do
         self:SetPoint('CENTER');
         self:SetSize(790, 345);
@@ -134,7 +142,7 @@ function UI:Init()
         classDropdown:EnableMouseWheel(true);
         local numClasses = GetNumClasses();
         function classDropdown:Increment()
-            local nextClass = UI.currentClass + 1;
+            local nextClass = UI.selectedClass + 1;
             if nextClass > numClasses then
                 nextClass = 1;
             end
@@ -142,7 +150,7 @@ function UI:Init()
         end
 
         function classDropdown:Decrement()
-            local prevClass = UI.currentClass - 1;
+            local prevClass = UI.selectedClass - 1;
             if prevClass < 1 then
                 prevClass = numClasses;
             end
@@ -158,10 +166,10 @@ function UI:Init()
         end
 
         local function isSelected(classID)
-            return classID == UI.currentClass;
+            return classID == UI.selectedClass;
         end
         local function setSelected(classID)
-            UI.currentClass = classID;
+            UI.selectedClass = classID;
             UI:DeferUpdateItems();
         end
         local nameFormat = '|Tinterface/icons/classicon_%s:16|t %s';
@@ -179,7 +187,7 @@ function UI:Init()
                 end
             end
         end);
-        classDropdown:PickClass(UI.currentClass);
+        classDropdown:PickClass(UI.selectedClass);
     end
 
     local seasonDropdown = CreateFrame('DropdownButton', nil, self, 'WowStyle1DropdownTemplate');
@@ -198,10 +206,10 @@ function UI:Init()
         end
 
         local function isSelected(seasonID)
-            return seasonID == UI.currentSeason;
+            return seasonID == UI.selectedSeason;
         end
         local function setSelected(seasonID)
-            UI.currentSeason = seasonID;
+            UI.selectedSeason = seasonID;
             UI:DeferUpdateItems();
         end
         local orderedSeasonIDs = {};
@@ -220,7 +228,7 @@ function UI:Init()
                 );
             end
         end);
-        seasonDropdown:PickSeason(UI.currentSeason);
+        seasonDropdown:PickSeason(UI.selectedSeason);
     end
 
     local updateButton = CreateFrame('Button', nil, self);
@@ -359,7 +367,7 @@ function UI:Init()
                             if InCombatLockdown() then
                                 GameTooltip_AddErrorLine(GameTooltip, 'You cannot open the Dressing Room while in combat');
                             end
-                            if UI.currentClass == 13 and UI.currentSeason == 8 then
+                            if UI.selectedClass == 13 and UI.selectedSeason == 8 then
                                 GameTooltip_AddErrorLine(GameTooltip, 'Evokers have no SL S4 set');
                             end
                             GameTooltip:Show();
@@ -371,7 +379,7 @@ function UI:Init()
                             if InCombatLockdown() then
                                 return;
                             end
-                            if UI.currentClass == 13 and UI.currentSeason == 8 then
+                            if UI.selectedClass == 13 and UI.selectedSeason == 8 then
                                 inspectButton:SetAttribute('macrotext', '');
                                 return;
                             end
@@ -471,6 +479,49 @@ function UI:Init()
             syndicatorMessage:SetWidth(350);
         end
     end
+
+    local currency = CreateFrame('Frame', nil, self);
+    self.Currency = currency;
+    do
+        currency:SetPoint('BOTTOMLEFT', self, 'BOTTOMLEFT', 15, 5);
+        currency:SetSize(200, 20);
+        currency:RegisterEvent('CURRENCY_DISPLAY_UPDATE');
+        currency:SetScript('OnEvent', function(_, event, currencyID)
+            if event == 'CURRENCY_DISPLAY_UPDATE' and currencyID == self.currentCurrencyID then
+                currency:UpdateText();
+            end
+        end);
+        function currency:UpdateText()
+            local currencyInfo = UI.currentCurrencyID ~= 0 and C_CurrencyInfo.GetCurrencyInfo(UI.currentCurrencyID);
+
+            if not currencyInfo then
+                self.Text:SetText('Catalyst Charges: N/A');
+                return;
+            end
+            local textureMarkup = CreateSimpleTextureMarkup(currencyInfo.iconFileID, 18);
+            self.Text:SetFormattedText('Catalyst Charges: |cFFFFFFFF%d/%d|r %s', currencyInfo.quantity, currencyInfo.maxQuantity, textureMarkup);
+        end
+
+        local text = currency:CreateFontString(nil, 'OVERLAY', 'GameFontNormal');
+        currency.Text = text;
+        text:SetPoint('LEFT', currency, 'LEFT', 0, 0);
+
+        text:SetScript('OnEnter', function()
+            if self.currentCurrencyID == 0 then
+                GameTooltip:SetOwner(currency, 'ANCHOR_CURSOR_RIGHT');
+                GameTooltip:AddLine('Catalyst Charges');
+                GameTooltip:AddLine('Between seasons, or addon not updated for current season.', 1, 0.5, 0.5);
+                GameTooltip:Show();
+            else
+                GameTooltip:SetOwner(currency, 'ANCHOR_CURSOR_RIGHT');
+                GameTooltip:SetCurrencyByID(self.currentCurrencyID);
+            end
+        end);
+        text:SetScript('OnLeave', function()
+            GameTooltip:Hide();
+        end);
+        currency:UpdateText();
+    end
 end
 
 function UI:ToggleUI()
@@ -498,8 +549,8 @@ end
 --- @param tier TUM_Tier
 --- @return string slashCommand
 function UI:CreateOutfitSlashCommand(tier)
-    local seasonID = self.currentSeason;
-    local classID = self.currentClass;
+    local seasonID = self.selectedSeason;
+    local classID = self.selectedClass;
     local itemTransmogInfoList = TransmogUtil.GetEmptyItemTransmogInfoList();
 
     for slotIndex, itemID in pairs(TUM.data.catalystItems[seasonID][classID]) do
@@ -521,6 +572,8 @@ function UI:OnUpdate()
     if self.deferUpdate then
         self.deferUpdate = false;
         self:UpdateItems();
+        local showCurrency = self.selectedClass == playerClassID and self.selectedSeason == TUM.currentSeason;
+        self.Currency:SetShown(showCurrency);
     end
     if self.deferNewResult then
         self.deferNewResult = false;
@@ -534,7 +587,7 @@ function UI:OnUpdate()
                     local slot = column.slot;
                     local results = self.results and self.results[slot] and self.results[slot][tier];
                     column.results = results;
-                    column.isCollected = TUM:IsCatalystItemCollected(self.currentSeason, self.currentClass, slot, tier);
+                    column.isCollected = TUM:IsCatalystItemCollected(self.selectedSeason, self.selectedClass, slot, tier);
                     if TUM.db.UI_treatOtherItemAsCollected and 'learnedFromOtherItem' == column.isCollected then
                         column.isCollected = true;
                     end
@@ -737,7 +790,7 @@ local function handleResult(result)
     end
     local item = Item:CreateFromItemLink(result.itemLink);
     item:ContinueOnItemLoad(function()
-        local info, upgradeInfo = checkResult(result, UI.currentClass, UI.currentSeason);
+        local info, upgradeInfo = checkResult(result, UI.selectedClass, UI.selectedSeason);
         if info or upgradeInfo then
             UI.deferNewResult = true;
         end
@@ -752,14 +805,14 @@ end
 
 function UI:UpdateItems()
     self.deferUpdate = false;
-    if self.pending == self.currentClass .. '|' .. self.currentSeason then
+    if self.pending == self.selectedClass .. '|' .. self.selectedSeason then
         return; -- already pending an update for this class and season
     end
-    self.pending = self.currentClass .. '|' .. self.currentSeason;
+    self.pending = self.selectedClass .. '|' .. self.selectedSeason;
     self.results = initResults();
     self.deferNewResult = true;
     if isSyndicatorLoaded then
-        local term = buildSyndicatorSearchTerm(self.currentClass);
+        local term = buildSyndicatorSearchTerm(self.selectedClass);
         --- @param results SyndicatorSearchResult[]
         Syndicator.Search.RequestSearchEverywhereResults(term, function(results) ---@diagnostic disable-line: undefined-global
             for _, result in pairs(results) do
@@ -812,4 +865,3 @@ function UI:UpdateItems()
         self.pending = nil;
     end
 end
-
