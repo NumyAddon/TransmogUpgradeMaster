@@ -395,7 +395,7 @@ function UI:BuildUI()
         self.rows = {};
         --- @param column TUM_UI_Column
         local function OnEnter(column)
-            if column.isCollected then return; end
+            if column.isCollected == true then return; end
             GameTooltip:SetOwner(column, 'ANCHOR_CURSOR_RIGHT');
             GameTooltip:AddLine('Transmog Upgrade Master');
             if column.results and next(column.results) then
