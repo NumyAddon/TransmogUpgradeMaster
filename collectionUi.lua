@@ -17,6 +17,7 @@ local SEASON_NAMES = {
 };
 local CATALYST_MARKUP = CreateAtlasMarkup('CreationCatalyst-32x32', 18, 18)
 local UPGRADE_MARKUP = CreateAtlasMarkup('CovenantSanctum-Upgrade-Icon-Available', 18, 18)
+local WARBAND_MARKUP = CreateAtlasMarkup('warbands-icon', 18, 18)
 local OK_MARKUP = "|TInterface\\RaidFrame\\ReadyCheck-Ready:0|t"
 local NOK_MARKUP = "|TInterface\\RaidFrame\\ReadyCheck-NotReady:0|t"
 local OTHER_MARKUP = CreateAtlasMarkup('QuestRepeatableTurnin', 14, 16)
@@ -408,6 +409,9 @@ function UI:BuildUI()
                     if result.requiresCatalyse then
                         text = CATALYST_MARKUP .. ' ' .. text;
                     end
+                    if result.distance > 0 then
+                        text = WARBAND_MARKUP .. ' ' .. text;
+                    end
                     GameTooltip:AddDoubleLine(text, result.location, 1, 1, 1, 1, 1, 1);
                 end
             else
@@ -602,31 +606,30 @@ function UI:OnUpdate()
                         end
                         if results and next(results) then
                             table.sort(results, function(a, b)
-                                if a.sortPriority ~= b.sortPriority then
-                                    return a.sortPriority > b.sortPriority;
+                                -- Order as Catalyse, then Upgrade, then CatalyseUpgrade.
+                                if a.requiresUpgrade ~= b.requiresUpgrade then
+                                    return not a.requiresUpgrade and b.requiresUpgrade;
+                                end
+                                if a.requiresCatalyse ~= b.requiresCatalyse then
+                                    return not a.requiresCatalyse and b.requiresCatalyse;
+                                end
+                                if a.distance ~= b.distance then
+                                    return a.distance < b.distance;
                                 end
                                 if a.location ~= b.location then
                                     return a.location > b.location;
                                 end
                                 return a.itemLink > b.itemLink;
                             end);
-                            local catalystRequired = true;
-                            local upgradeRequired = true;
-                            for _, result in pairs(results) do
-                                if not result.requiresUpgrade and not result.requiresCatalyseUpgrade then
-                                    upgradeRequired = false;
-                                    catalystRequired = true;
-                                    break;
-                                end
-                                if not result.requiresCatalyse and not result.requiresCatalyseUpgrade then
-                                    catalystRequired = false;
-                                end
-                            end
-                            if upgradeRequired then
+                            local firstResult = results[1];
+                            if firstResult.requiresUpgrade then
                                 text = ' ' .. UPGRADE_MARKUP .. text;
                             end
-                            if catalystRequired then
+                            if firstResult.requiresCatalyse then
                                 text = ' ' .. CATALYST_MARKUP .. text;
+                            end
+                            if firstResult.distance > 0 then
+                                text = ' ' .. WARBAND_MARKUP .. text;
                             end
                         end
                         if text == other then
@@ -735,18 +738,19 @@ local function checkResult(scanResult, classID, seasonID)
     local tumResult = TUM:IsAppearanceMissing(scanResult.itemLink, classID);
 
     local location;
-    local sortPriority = 0;
+    local distance = 0;
     if scanResult.source.character then
         local classColor = C_ClassColor.GetClassColor(scanClassFile)
+        local classFile = C_CreatureInfo.GetClassInfo(classID).classFile
         location = string.format(
             '%s: %s',
             classColor:WrapTextInColorCode(scanResult.source.character),
             scanResult.source.container
         );
-        sortPriority = scanResult.source.character == playerFullName and 1000 or 10;
+        distance = scanClassFile ~= classFile and 1000 or 0;
     elseif scanResult.source.warband then
         location = CreateAtlasMarkup('warbands-icon', 17, 13) .. ' Warband bank';
-        sortPriority = 100 + scanResult.source.warband;
+        distance = 100 + scanResult.source.warband;
     end
 
     local info, upgradeInfo;
@@ -758,10 +762,9 @@ local function checkResult(scanResult, classID, seasonID)
             knownFromOtherItem = tumResult.catalystAppearanceLearnedFromOtherItem,
             requiresCatalyse = true,
             requiresUpgrade = false,
-            requiresCatalyseUpgrade = false,
             itemLink = scanResult.itemLink,
             location = location,
-            sortPriority = sortPriority,
+            distance = distance,
         };
     end
 
@@ -773,10 +776,9 @@ local function checkResult(scanResult, classID, seasonID)
             knownFromOtherItem = (isItemCatalysed and tumResult.upgradeAppearanceLearnedFromOtherItem) or tumResult.catalystUpgradeAppearanceLearnedFromOtherItem,
             requiresCatalyse = not isItemCatalysed,
             requiresUpgrade = true,
-            requiresCatalyseUpgrade = not isItemCatalysed,
             itemLink = scanResult.itemLink,
             location = location,
-            sortPriority = sortPriority,
+            distance = distance,
         };
     end
 

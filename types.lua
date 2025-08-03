@@ -15,10 +15,9 @@
 --- @field knownFromOtherItem boolean
 --- @field requiresUpgrade boolean
 --- @field requiresCatalyse boolean
---- @field requiresCatalyseUpgrade boolean
 --- @field itemLink string
 --- @field location string
---- @field sortPriority number # higher numbers should be sorted first
+--- @field distance number # 0 = same character, 100+ = warband bank, 1000 = different character.
 
 --- @class TUM_AppearanceMissingResult
 --- @field canCatalyse boolean? # whether the item can be catalysed; if false, the catalystAppearanceMissing values will be nil
