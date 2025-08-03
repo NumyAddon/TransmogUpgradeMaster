@@ -596,7 +596,6 @@ function UI:OnUpdate()
                         column.isCollected = true;
                     end
 
-                    column.Text:ClearPointsOffset()
                     if true == column.isCollected then
                         column.Text:SetText(ok);
                     else
@@ -631,9 +630,6 @@ function UI:OnUpdate()
                             if firstResult.distance > 0 then
                                 text = ' ' .. WARBAND_MARKUP .. text;
                             end
-                        end
-                        if text == other then
-                            column.Text:AdjustPointsOffset(-3, 0);
                         end
                         column.Text:SetText(text);
                     end
