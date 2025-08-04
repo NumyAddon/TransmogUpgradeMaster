@@ -564,6 +564,7 @@ function UI:CreateOutfitSlashCommand(tier)
             itemTransmogInfoList[invSlot] = ItemUtil.CreateItemTransmogInfo(sourceIDs[tier]);
         end
     end
+    itemTransmogInfoList[INVSLOT_MAINHAND] = ItemUtil.CreateItemTransmogInfo(4231); -- Knuckleduster, smallest I could find
 
     return TransmogUtil.CreateOutfitSlashCommand(itemTransmogInfoList);
 end
