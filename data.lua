@@ -141,6 +141,22 @@ data.currency = {
     [TWW_S3] = 3269,
 };
 
+--- @type table<TUM_Season, table<TUM_Tier, number>> # [seasonID][tier] = minimum item level
+data.upgradeItemLevels = {
+    [TWW_S2] = {
+        [TIER_LFR] = 623,
+        [TIER_NORMAL] = 636,
+        [TIER_HEROIC] = 649,
+        [TIER_MYTHIC] = 662,
+    },
+    [TWW_S3] = {
+        [TIER_LFR] = 668,
+        [TIER_NORMAL] = 681,
+        [TIER_HEROIC] = 694,
+        [TIER_MYTHIC] = 707,
+    },
+};
+
 --- could potentially be extracted from C_TransmogSets.GetAllSets() more or less, but meh, effort, and requires linking to a specific season still anyway
 --- @type table<TUM_Season, table<number, {[1]:number, [2]:number, [3]:number, [4]:number}>> [m+ seasonID][classID] = { [1] = lfrSetID, [2] = normalSetID, [3] = heroicSetID, [4] = mythicSetID }
 data.sets = {

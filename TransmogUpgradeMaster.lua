@@ -384,7 +384,7 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
     end
 
     local currentTier = 0;
-    if upgradeInfo then
+    if upgradeInfo and upgradeInfo.currentLevel > 0 then
         currentTier = self.data.constants.trackStringIDToTiers[upgradeInfo.trackStringID] or 0
         if currentTier and upgradeInfo.currentLevel >= 5 and currentTier < 4 then
             currentTier = currentTier + 1
@@ -392,6 +392,8 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
         if canUpgrade and upgradeInfo.currentLevel < 5 and currentTier < 4 then
             result.canUpgrade = true
         end
+    else
+        currentTier = self:GetTierFromItemLevel(itemLink, seasonID) or 0
     end
     local _, sourceID = C_TransmogCollection.GetItemInfo(itemLink)
     tryInsert(debugLines, 'sourceID: ' .. tostring(sourceID))
@@ -631,6 +633,33 @@ end
 --- @return nil|table<TUM_Tier, number>
 function TUM:GetSourceIDsForItemID(itemID)
     return self.data.itemSourceIDs[itemID] or self.itemSourceIDs[itemID]
+end
+
+--- @param itemLink string
+--- @param seasonID TUM_Season
+--- @return TUM_Tier? tier # nil if the tier cannot be determined from ilvl
+function TUM:GetTierFromItemLevel(itemLink, seasonID)
+    local seasonInfo = self.data.upgradeItemLevels[seasonID]
+    local tooltipData = C_TooltipInfo.GetHyperlink(itemLink)
+    if not tooltipData or not seasonInfo then return nil end
+
+    local itemLevel
+    for _, line in ipairs(tooltipData.lines) do
+        if line.type == Enum.TooltipDataLineType.ItemLevel then
+            itemLevel = line.itemLevel;
+            break;
+        end
+    end
+    if not itemLevel then return nil; end
+
+    local foundTier = nil
+    for tier, minItemLevel in ipairs(seasonInfo) do
+        if itemLevel >= minItemLevel then
+            foundTier = tier;
+        end
+    end
+
+    return foundTier;
 end
 
 --- @param itemLink string
