@@ -16,6 +16,7 @@ TUM.Config = ns.Config
 --- @alias TUM_LearnedFromOtherItem "learnedFromOtherItem"
 local LEARNED_FROM_OTHER_ITEM = 'learnedFromOtherItem'
 
+local BONUS_ID_OFFSET = 13
 local ITEM_UPGRADE_TOOLTIP_PATTERN = ITEM_UPGRADE_TOOLTIP_FORMAT_STRING:gsub('%%d', '(%%d+)'):gsub('%%s', '(.-)');
 local CATALYST_MARKUP = CreateAtlasMarkup('CreationCatalyst-32x32', 18, 18)
 local UPGRADE_MARKUP = CreateAtlasMarkup('CovenantSanctum-Upgrade-Icon-Available', 18, 18)
@@ -216,7 +217,6 @@ function TUM:GetTokenInfo(itemID, itemLink)
     }
 end
 
-local BONUS_ID_OFFSET = 13;
 --- doesn't return season information for catalysed items from previous seasons, but that's fine, since nothing can be done with those items anyway
 function TUM:GetItemSeason(itemLink)
     if self:IsCurrentSeasonItem(itemLink) then
@@ -393,7 +393,7 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
             result.canUpgrade = true
         end
     else
-        currentTier = self:GetTierFromItemLevel(itemLink, seasonID) or 0
+        currentTier = self:GetTierFromUpgradeTrackBonusID(itemLink) or 0
     end
     local _, sourceID = C_TransmogCollection.GetItemInfo(itemLink)
     tryInsert(debugLines, 'sourceID: ' .. tostring(sourceID))
@@ -636,30 +636,18 @@ function TUM:GetSourceIDsForItemID(itemID)
 end
 
 --- @param itemLink string
---- @param seasonID TUM_Season
---- @return TUM_Tier? tier # nil if the tier cannot be determined from ilvl
-function TUM:GetTierFromItemLevel(itemLink, seasonID)
-    local seasonInfo = self.data.upgradeItemLevels[seasonID]
-    local tooltipData = C_TooltipInfo.GetHyperlink(itemLink)
-    if not tooltipData or not seasonInfo then return nil end
+--- @return TUM_Tier? tier # nil if the tier cannot be determined from itemlink
+function TUM:GetTierFromUpgradeTrackBonusID(itemLink)
+    local _, data = LinkUtil.ExtractLink(itemLink);
+    local parts = strsplittable(':', data);
 
-    local itemLevel
-    for _, line in ipairs(tooltipData.lines) do
-        if line.type == Enum.TooltipDataLineType.ItemLevel then
-            itemLevel = line.itemLevel;
-            break;
+    local numBonusIDs = tonumber(parts[BONUS_ID_OFFSET]) or 0;
+    for index = (BONUS_ID_OFFSET + 1), (BONUS_ID_OFFSET + numBonusIDs) do
+        local bonusID = tonumber(parts[index]);
+        if self.data.constants.upgradeTrackBonusIDs[bonusID] then
+            return self.data.constants.upgradeTrackBonusIDs[bonusID];
         end
     end
-    if not itemLevel then return nil; end
-
-    local foundTier = nil
-    for tier, minItemLevel in ipairs(seasonInfo) do
-        if itemLevel >= minItemLevel then
-            foundTier = tier;
-        end
-    end
-
-    return foundTier;
 end
 
 --- @param itemLink string

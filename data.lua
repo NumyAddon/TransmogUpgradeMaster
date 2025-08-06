@@ -27,21 +27,21 @@ local WRIST = Enum.InventoryType.IndexWristType;
 local HAND = Enum.InventoryType.IndexHandType;
 local CLOAK = Enum.InventoryType.IndexCloakType;
 
-local WARRIOR = 1
-local PALADIN = 2
-local HUNTER = 3
-local ROGUE = 4
-local PRIEST = 5
-local DEATHKNIGHT = 6
-local SHAMAN = 7
-local MAGE = 8
-local WARLOCK = 9
-local MONK = 10
-local DRUID = 11
-local DEMONHUNTER = 12
-local EVOKER = 13
+local WARRIOR = 1;
+local PALADIN = 2;
+local HUNTER = 3;
+local ROGUE = 4;
+local PRIEST = 5;
+local DEATHKNIGHT = 6;
+local SHAMAN = 7;
+local MAGE = 8;
+local WARLOCK = 9;
+local MONK = 10;
+local DRUID = 11;
+local DEMONHUNTER = 12;
+local EVOKER = 13;
 
-data.currentSeason = TWW_S2;
+data.currentSeason = TWW_S3;
 
 data.constants = {};
 do
@@ -63,7 +63,7 @@ do
         TWW_S1 = TWW_S1,
         TWW_S2 = TWW_S2,
         TWW_S3 = TWW_S3,
-    }
+    };
 
     -- see https://wago.tools/db2/SharedString
     local VETERAN_TRACK_STRING_ID = 972;
@@ -75,6 +75,44 @@ do
         [CHAMPION_TRACK_STRING_ID] = data.constants.tiers.normal,
         [HERO_TRACK_STRING_ID] = data.constants.tiers.heroic,
         [MYTH_TRACK_STRING_ID] = data.constants.tiers.mythic,
+    };
+
+    data.constants.upgradeTrackBonusIDs = {
+        [11969] = TIER_LFR, -- Veteran 1
+        [11970] = TIER_LFR, -- Veteran 2
+        [11971] = TIER_LFR, -- Veteran 3
+        [11972] = TIER_LFR,    -- Veteran 4
+
+        [11973] = TIER_NORMAL, -- Veteran 5
+        [11974] = TIER_NORMAL, -- Veteran 6
+        [11975] = TIER_NORMAL, -- Veteran 7
+        [11976] = TIER_NORMAL, -- Veteran 8
+        [11977] = TIER_NORMAL, -- Champion 1
+        [11978] = TIER_NORMAL, -- Champion 2
+        [11979] = TIER_NORMAL, -- Champion 3
+        [11980] = TIER_NORMAL, -- Champion 4
+
+        [11981] = TIER_HEROIC, -- Champion 5
+        [11982] = TIER_HEROIC, -- Champion 6
+        [11983] = TIER_HEROIC, -- Champion 7
+        [11984] = TIER_HEROIC, -- Champion 8
+        [11985] = TIER_HEROIC, -- Hero 1
+        [11986] = TIER_HEROIC, -- Hero 2
+        [11987] = TIER_HEROIC, -- Hero 3
+        [11988] = TIER_HEROIC, -- Hero 4
+
+        [11989] = TIER_MYTHIC, -- Hero 5
+        [11990] = TIER_MYTHIC, -- Hero 6
+        [12371] = TIER_MYTHIC, -- Hero 7 - only exists in some seasons
+        [12372] = TIER_MYTHIC, -- Hero 8 - only exists in some seasons
+        [11991] = TIER_MYTHIC, -- Myth 1
+        [11992] = TIER_MYTHIC, -- Myth 2
+        [11993] = TIER_MYTHIC, -- Myth 3
+        [11994] = TIER_MYTHIC, -- Myth 4
+        [11995] = TIER_MYTHIC, -- Myth 5
+        [11996] = TIER_MYTHIC, -- Myth 6
+        [12376] = TIER_MYTHIC, -- Myth 7 - only exists in some seasons
+        [12375] = TIER_MYTHIC, -- Myth 8 - only exists in some seasons
     };
 
     data.constants.conquestItemModID = 159;
@@ -92,10 +130,10 @@ do
         [Enum.ItemCreationContext.RaidMythic] = data.constants.tiers.mythic,
     };
 
-    local CLOTH = Enum.ItemArmorSubclass.Cloth
-    local LEATHER = Enum.ItemArmorSubclass.Leather
-    local MAIL = Enum.ItemArmorSubclass.Mail
-    local PLATE = Enum.ItemArmorSubclass.Plate
+    local CLOTH = Enum.ItemArmorSubclass.Cloth;
+    local LEATHER = Enum.ItemArmorSubclass.Leather;
+    local MAIL = Enum.ItemArmorSubclass.Mail;
+    local PLATE = Enum.ItemArmorSubclass.Plate;
     data.constants.classArmorTypeMap = {
         [1] = PLATE, -- WARRIOR
         [2] = PLATE, -- PALADIN
@@ -141,22 +179,6 @@ data.currency = {
     [TWW_S3] = 3269,
 };
 
---- @type table<TUM_Season, table<TUM_Tier, number>> # [seasonID][tier] = minimum item level
-data.upgradeItemLevels = {
-    [TWW_S2] = {
-        [TIER_LFR] = 623,
-        [TIER_NORMAL] = 636,
-        [TIER_HEROIC] = 649,
-        [TIER_MYTHIC] = 662,
-    },
-    [TWW_S3] = {
-        [TIER_LFR] = 668,
-        [TIER_NORMAL] = 681,
-        [TIER_HEROIC] = 694,
-        [TIER_MYTHIC] = 707,
-    },
-};
-
 --- could potentially be extracted from C_TransmogSets.GetAllSets() more or less, but meh, effort, and requires linking to a specific season still anyway
 --- @type table<TUM_Season, table<number, {[1]:number, [2]:number, [3]:number, [4]:number}>> [m+ seasonID][classID] = { [1] = lfrSetID, [2] = normalSetID, [3] = heroicSetID, [4] = mythicSetID }
 data.sets = {
@@ -189,8 +211,8 @@ data.sets = {
         [DRUID] = { 5108, 5107, 5105, 5106 },
         [DEMONHUNTER] = { 5104, 5103, 5101, 5102 },
         [EVOKER] = { 5112, 5111, 5109, 5110 },
-    }
-}
+    },
+};
 
 --- C_TransmogSets.GetSourceIDsForSlot and C_TransmogSets.GetSourcesForSlot miss information for certain slots, very "fun" -.-
 --- @type table<number, table<Enum.InventoryType, number>> # [setID] = { [Enum.InventoryType.Foo] = sourceID }
@@ -301,7 +323,7 @@ data.setSourceIDs = {
     [5111] = { [HEAD] = 286110, [SHOULDER] = 286086, [CHEST] = 286146, [WAIST] = 286074, [LEGS] = 286098, [FEET] = 286134, [WRIST] = 286062, [HAND] = 286122, [CLOAK] = 286050 }, -- Evoker
     [5109] = { [HEAD] = 286116, [SHOULDER] = 286092, [CHEST] = 286152, [WAIST] = 286080, [LEGS] = 286104, [FEET] = 286140, [WRIST] = 286068, [HAND] = 286128, [CLOAK] = 286056 }, -- Evoker
     [5110] = { [HEAD] = 286117, [SHOULDER] = 286093, [CHEST] = 286153, [WAIST] = 286081, [LEGS] = 286105, [FEET] = 286141, [WRIST] = 286069, [HAND] = 286129, [CLOAK] = 286057 }, -- Evoker
-}
+};
 
 --- @type table<number, table<TUM_Tier, number>> # [itemID] = { [tier] = itemSourceID }
 data.itemSourceIDs = {
@@ -1192,7 +1214,7 @@ data.catalystBonusIDMap = {
     [10376] = TWW_S1, [10377] = TWW_S1, [10378] = TWW_S1, [10379] = TWW_S1, [10380] = TWW_S1,
     [11964] = TWW_S2, [11965] = TWW_S2, [11966] = TWW_S2, [11967] = TWW_S2, [11998] = TWW_S2,
     [12239] = TWW_S3, [12240] = TWW_S3, [12241] = TWW_S3, [12242] = TWW_S3, [12243] = TWW_S3,
-}
+};
 
 --- @type table<TUM_Season, table<number, table<Enum.InventoryType, number>>> # [m+ seasonID][classID][slotID] = itemID
 data.catalystItems = {
@@ -1315,7 +1337,7 @@ data.catalystItems = {
         [DEMONHUNTER] = { [HEAD] = 237691, [SHOULDER] = 237689, [CHEST] = 237694, [WAIST] = 237688, [LEGS] = 237690, [FEET] = 237693, [WRIST] = 237687, [HAND] = 237692, [CLOAK] = 237686 },
         [EVOKER] = { [HEAD] = 237655, [SHOULDER] = 237653, [CHEST] = 237658, [WAIST] = 237652, [LEGS] = 237654, [FEET] = 237657, [WRIST] = 237651, [HAND] = 237656, [CLOAK] = 237650 },
     },
-}
+};
 
 --- @type table<number, TUM_Season> # [itemID] = seasonID
 data.catalystItemByID = {};
@@ -1335,7 +1357,7 @@ local classCombo = {
     pala_priest_shaman = { [PALADIN] = true, [PRIEST] = true, [SHAMAN] = true },
     monk_rogue_warrior = { [MONK] = true, [ROGUE] = true, [WARRIOR] = true },
     evoker_monk_rogue_warrior = { [EVOKER] = true, [MONK] = true, [ROGUE] = true, [WARRIOR] = true },
-}
+};
 --- @type table<number, { season: TUM_Season, slot: Enum.InventoryType, classList: table<number, boolean> }>
 data.tokens = {
     [191005] = { season = SL_S4, slot = HEAD, classList = classCombo.dk_dh_lock }, -- Dreadful Helm Module
@@ -1499,4 +1521,3 @@ data.tokens = {
     [237596] = { season = TWW_S3, slot = LEGS, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Silken Offering
     [237588] = { season = TWW_S3, slot = HAND, classList = classCombo.evoker_monk_rogue_warrior }, -- Zenith Binding Agent
 };
-
