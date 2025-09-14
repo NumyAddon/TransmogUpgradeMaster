@@ -17,6 +17,8 @@
 --- @field requiresCatalyse boolean
 --- @field itemLink string
 --- @field location string
+--- @field upgradeLevel number # upgrade track level, 1-6/8
+--- @field maxUpgradeLevel number # 6 or 8
 --- @field distance number # 0 = same character, 100+ = warband bank, 1000 = different character.
 
 --- @class TUM_AppearanceMissingResult

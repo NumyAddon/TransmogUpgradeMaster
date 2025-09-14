@@ -412,6 +412,9 @@ function UI:BuildUI()
                     if result.distance > 0 then
                         text = WARBAND_MARKUP .. ' ' .. text;
                     end
+                    if result.upgradeLevel > 0 then
+                        text = text .. (' %d/%d'):format(result.upgradeLevel, result.maxUpgradeLevel);
+                    end
                     GameTooltip:AddDoubleLine(text, result.location, 1, 1, 1, 1, 1, 1);
                 end
             else
@@ -616,6 +619,9 @@ function UI:OnUpdate()
                                 if a.distance ~= b.distance then
                                     return a.distance < b.distance;
                                 end
+                                if a.upgradeLevel ~= b.upgradeLevel then
+                                    return a.upgradeLevel > b.upgradeLevel;
+                                end
                                 if a.location ~= b.location then
                                     return a.location > b.location;
                                 end
@@ -693,7 +699,7 @@ end
 --- @param classID number
 --- @param seasonID number
 --- @return nil|TUM_UI_ResultData info
---- @return nil|TUM_UI_ResultData upgradeInfo
+--- @return nil|TUM_UI_ResultData upgradedInfo
 local function checkResult(scanResult, classID, seasonID)
     if
         scanResult.source.guild -- ignore guild banks, might add some filter setting later
@@ -749,8 +755,11 @@ local function checkResult(scanResult, classID, seasonID)
         location = CreateAtlasMarkup('warbands-icon', 17, 13) .. ' Warband bank';
         distance = 100 + scanResult.source.warband;
     end
+    local upgradeInfo = C_Item.GetItemUpgradeInfo(scanResult.itemLink)
+    local upgradeLevel = upgradeInfo and upgradeInfo.currentLevel or 0
+    local maxUpgradeLevel = upgradeInfo and upgradeInfo.maxLevel or 0
 
-    local info, upgradeInfo;
+    local info, upgradedInfo;
     if not isItemCatalysed and tumResult.catalystAppearanceMissing then
         --- @type TUM_UI_ResultData
         info = {
@@ -762,12 +771,14 @@ local function checkResult(scanResult, classID, seasonID)
             itemLink = scanResult.itemLink,
             location = location,
             distance = distance,
+            upgradeLevel = upgradeLevel,
+            maxUpgradeLevel = maxUpgradeLevel,
         };
     end
 
     if tumResult.catalystUpgradeAppearanceMissing or (isItemCatalysed and tumResult.upgradeAppearanceMissing) then
         --- @type TUM_UI_ResultData
-        upgradeInfo = {
+        upgradedInfo = {
             slot = itemSlot,
             tier = tumResult.contextData.tier + 1,
             knownFromOtherItem = (isItemCatalysed and tumResult.upgradeAppearanceLearnedFromOtherItem) or tumResult.catalystUpgradeAppearanceLearnedFromOtherItem,
@@ -776,10 +787,12 @@ local function checkResult(scanResult, classID, seasonID)
             itemLink = scanResult.itemLink,
             location = location,
             distance = distance,
+            upgradeLevel = upgradeLevel,
+            maxUpgradeLevel = maxUpgradeLevel,
         };
     end
 
-    return info, upgradeInfo;
+    return info, upgradedInfo;
 end
 
 --- @param result SyndicatorSearchResult
