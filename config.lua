@@ -4,6 +4,9 @@ local name, ns = ...;
 local Config = {}
 ns.Config = Config;
 
+--- @type TransmogUpgradeMaster
+local TUM = ns.core;
+
 --- @enum TUM_Config_ModifierKeyOptions
 Config.modifierKeyOptions = {
     always = "always",
