@@ -4,9 +4,6 @@ local name, ns = ...;
 local Config = {}
 ns.Config = Config;
 
---- @type TransmogUpgradeMaster
-local TUM = ns.core;
-
 --- @enum TUM_Config_ModifierKeyOptions
 Config.modifierKeyOptions = {
     always = "always",
@@ -37,6 +34,9 @@ Config.settingKeys = {
 
 --- @return TUM_DB
 function Config:Init()
+    --- @type TransmogUpgradeMaster
+    local TUM = ns.core;
+
     --- @class TUM_DB
     local defaults = {
         --- @type boolean
