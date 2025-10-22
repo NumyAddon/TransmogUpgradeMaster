@@ -123,7 +123,7 @@ do
         [3] = data.constants.tiers.mythic,
     };
 
-    local difficultyTierFormat = "|cFF 0FF 0%s|r";
+    local difficultyTierFormat = "|cFF 0FF 0%s|r"; -- no idea why the color is formatted this way..
     data.constants.difficultyTierStrings = {
         [data.constants.tiers.lfr] = difficultyTierFormat:format(PLAYER_DIFFICULTY3),
         [data.constants.tiers.normal] = difficultyTierFormat:format(PLAYER_DIFFICULTY1), -- usually the line is just absent instead
