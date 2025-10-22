@@ -197,8 +197,9 @@ function TUM:IsToken(itemID)
     return not not self.data.tokens[itemID]
 end
 
---- @return nil|{season: number, classList: number[], tier: number|nil, slot: number}
-function TUM:GetTokenInfo(itemID, itemLink)
+--- @param tooltipData TooltipData?
+--- @return nil|{season: number, classList: number[], tier: TUM_Tier|nil, slot: number}
+function TUM:GetTokenInfo(itemID, itemLink, tooltipData)
     local tokenInfo = self.data.tokens[itemID]
     if not tokenInfo then
         return nil
@@ -207,7 +208,7 @@ function TUM:GetTokenInfo(itemID, itemLink)
     local _, data = LinkUtil.ExtractLink(itemLink)
     local parts = strsplittable(':', data)
     local itemCreationContext = tonumber(parts[12])
-    local tier = self.data.constants.itemContextTiers[itemCreationContext] or nil
+    local tier = self.data.constants.itemContextTiers[itemCreationContext] or self:GetTooltipDifficultyTier(itemLink, tooltipData)
 
     return {
         season = tokenInfo.season,
@@ -215,6 +216,24 @@ function TUM:GetTokenInfo(itemID, itemLink)
         slot = tokenInfo.slot,
         classList = tokenInfo.classList,
     }
+end
+
+--- @param itemLink string
+--- @param tooltipData TooltipData?
+--- @return TUM_Tier|nil tier
+function TUM:GetTooltipDifficultyTier(itemLink, tooltipData)
+    tooltipData = tooltipData or C_TooltipInfo.GetHyperlink(itemLink)
+    local line2Text = tooltipData and tooltipData.lines[2] and tooltipData.lines[2].leftText or nil
+    if not line2Text then return nil end
+
+    for tier, difficultyString in pairs(self.data.constants.difficultyTierStrings) do
+        if line2Text == difficultyString then
+            return tier
+        end
+    end
+
+    -- default to normal
+    return self.data.constants.tiers.normal
 end
 
 --- doesn't return season information for catalysed items from previous seasons, but that's fine, since nothing can be done with those items anyway
@@ -283,7 +302,7 @@ end
 
 --- @param itemLink string
 --- @param tooltipData TooltipData
---- @return number? itemBinding # see Enum.TooltipDataItemBinding
+--- @return Enum.TooltipDataItemBinding|nil itemBinding
 function TUM:GetItemBinding(itemLink, tooltipData)
     local data = tooltipData or C_TooltipInfo.GetHyperlink(itemLink);
     for _, line in ipairs(data and data.lines or {}) do
@@ -341,8 +360,9 @@ end
 --- @param itemLink string
 --- @param classID number? # defaults to the player's class
 --- @param debugLines string[]? # if provided, debug lines will be added to this table
+--- @param tooltipData TooltipData?
 --- @return TUM_AppearanceMissingResult
-function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
+function TUM:IsAppearanceMissing(itemLink, classID, debugLines, tooltipData)
     --- @type TUM_AppearanceMissingResult
     local result = {
         canCatalyse = nil,
@@ -403,7 +423,7 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines)
         tryInsert(debugLines, 'itemModID: ' .. tostring(sourceInfo and sourceInfo.itemModID))
     end
 
-    local tokenInfo = isToken and self:GetTokenInfo(itemID, itemLink)
+    local tokenInfo = isToken and self:GetTokenInfo(itemID, itemLink, tooltipData)
     if tokenInfo then
         if not tokenInfo.classList[classID] then
             tryInsert(debugLines, 'item is a token for another class')
@@ -531,7 +551,7 @@ function TUM:HandleTooltip(tooltip, tooltipData)
     if not itemLink then return end
 
     local debugLines = {}
-    local result = self:IsAppearanceMissing(itemLink, nil, debugLines)
+    local result = self:IsAppearanceMissing(itemLink, nil, debugLines, tooltipData)
 
     for _, line in ipairs(debugLines) do
         self:AddDebugLine(tooltip, line)
@@ -580,7 +600,7 @@ function TUM:HandleTooltip(tooltip, tooltipData)
         local catalystUpgradeClassList = {}
         for classID = 1, GetNumClasses() do
             if classID ~= playerClassID and self.db.warbandCatalystClassList[classID] then
-                local classResult = self:IsAppearanceMissing(itemLink, classID)
+                local classResult = self:IsAppearanceMissing(itemLink, classID, nil, tooltipData)
                 if classResult.catalystAppearanceMissing then
                     table.insert(catalystClassList, classID)
                 end

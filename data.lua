@@ -123,6 +123,14 @@ do
         [3] = data.constants.tiers.mythic,
     };
 
+    local difficultyTierFormat = "|cFF 0FF 0%s|r";
+    data.constants.difficultyTierStrings = {
+        [data.constants.tiers.lfr] = difficultyTierFormat:format(PLAYER_DIFFICULTY3),
+        [data.constants.tiers.normal] = difficultyTierFormat:format(PLAYER_DIFFICULTY1), -- usually the line is just absent instead
+        [data.constants.tiers.heroic] = difficultyTierFormat:format(PLAYER_DIFFICULTY2),
+        [data.constants.tiers.mythic] = difficultyTierFormat:format(PLAYER_DIFFICULTY6),
+    };
+
     data.constants.itemContextTiers = {
         [Enum.ItemCreationContext.RaidFinder] = data.constants.tiers.lfr,
         [Enum.ItemCreationContext.RaidNormal] = data.constants.tiers.normal,
