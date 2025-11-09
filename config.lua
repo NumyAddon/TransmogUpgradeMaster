@@ -135,13 +135,12 @@ function Config:Init()
         Settings.VarType.String
     );
     do
-        local expandInitializer, isExpanded = self:MakeExpandableSection("Displayed Classes")
+        local expandInitializer, isExpanded = self:MakeExpandableSection(layout, "Displayed Classes")
 
         local function isVisible()
             return self.db.showWarbandCatalystInfoModifierKey ~= self.modifierKeyOptions.never;
         end
         expandInitializer:AddShownPredicate(isVisible);
-        layout:AddInitializer(expandInitializer);
 
         local tooltip = "If checked, the tooltip will show the Catalyst information for %s for warbound or BoE items."
         for classID = 1, GetNumClasses() do
@@ -171,9 +170,9 @@ function Config:Init()
         defaults.autoConfirmCatalyst,
         "Automatically confirm the popup window when you try to Catalyse an item.",
         {
-            { text = "Never",           label = "Never",           tooltip = "Never auto-confirm.",                                         value = self.autoConfirmCatalystOptions.never, },
-            { text = "Previous Season", label = "Previous Season", tooltip = "Auto-confirm for items from previous seasons that are free.", value = self.autoConfirmCatalystOptions.previousSeason, },
-            { text = "Always",          label = "Always",          tooltip = "Always auto-confirm, even if there are limited charges.",     value = self.autoConfirmCatalystOptions.always, },
+            { text = "Never",           tooltip = "Never auto-confirm.",                                         value = self.autoConfirmCatalystOptions.never, },
+            { text = "Previous Season", tooltip = "Auto-confirm for items from previous seasons that are free.", value = self.autoConfirmCatalystOptions.previousSeason, },
+            { text = "Always",          tooltip = "Always auto-confirm, even if there are limited charges.",     value = self.autoConfirmCatalystOptions.always, },
         },
         Settings.VarType.String
     )
@@ -238,7 +237,7 @@ function Config:MakeCheckbox(category, label, settingKey, defaultValue, tooltip,
     return Settings.CreateCheckbox(category, setting, tooltip);
 end
 
---- @alias TUMDropDownOptions { text: string, label: string, tooltip: string, value: any }[]
+--- @alias TUMDropDownOptions { text: string, label: string?, tooltip: string?, value: any }[]
 
 --- @param options TUMDropDownOptions|fun(): TUMDropDownOptions
 --- @param varType "string"|"number"|"boolean" # one of Settings.VarType
@@ -250,11 +249,19 @@ function Config:MakeDropdown(category, label, settingKey, defaultValue, tooltip,
     if type(options) == "table" then
         GetOptions = function() return options; end
     end
+    local function wrapper()
+        local opts = GetOptions();
+        for _, option in pairs(opts) do
+            option.label = option.label or option.text;
+        end
+
+        return opts;
+    end
 
     local setting = Settings.RegisterAddOnSetting(category, variable, settingKey, self.db, varType, label, defaultValue);
     setting:SetValueChangedCallback(function(setting, value) self:OnSettingChange(setting:GetVariable(), value) end);
 
-    return Settings.CreateDropdown(category, setting, GetOptions, tooltip);
+    return Settings.CreateDropdown(category, setting, wrapper, tooltip);
 end
 
 --- @return SettingsListElementInitializer
@@ -271,10 +278,11 @@ function Config:MakeButton(category, layout, label, onClick, tooltip)
     return initializer;
 end
 
+--- @param layout SettingsVerticalLayoutMixin
 --- @param sectionName string
 --- @return SettingsExpandableSectionInitializer initializer
 --- @return fun(): boolean isExpanded
-function Config:MakeExpandableSection(sectionName)
+function Config:MakeExpandableSection(layout, sectionName)
     local expandInitializer = CreateSettingsExpandableSectionInitializer(sectionName);
     function expandInitializer:GetExtent()
         return 25;
@@ -298,6 +306,7 @@ function Config:MakeExpandableSection(sectionName)
             return initializer:GetExtent();
         end
     end);
+    layout:AddInitializer(expandInitializer);
 
     return expandInitializer, function() return expandInitializer.data.expanded; end;
 end
@@ -307,16 +316,10 @@ function Config:OnSettingChange(setting, value)
 end
 
 -------------------
---- @class TransmogUpgradeMaster_SettingsButtonControlMixin : SettingsControlMixin
+--- @class TransmogUpgradeMaster_SettingsButtonControlMixin : SettingsListElementTemplate, SettingsControlMixin
 TransmogUpgradeMaster_SettingsButtonControlMixin = CreateFromMixins(SettingsControlMixin);
 do
     local mixin = TransmogUpgradeMaster_SettingsButtonControlMixin;
-    function mixin:OnLoad()
-        SettingsControlMixin.OnLoad(self);
-        self.Button = CreateFrame("Button", nil, self, "UIPanelButtonTemplate");
-        self.Button:SetSize(200, 26);
-        self.Button:SetPoint("LEFT", self, "CENTER", -80, 0);
-    end
 
     function mixin:Init(initializer)
         SettingsControlMixin.Init(self, initializer);

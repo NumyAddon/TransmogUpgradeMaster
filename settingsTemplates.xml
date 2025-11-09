@@ -5,5 +5,13 @@ https://raw.githubusercontent.com/Meorawr/wow-ui-schema/main/UI.xsd">
         <Scripts>
             <OnLoad method="OnLoad"/>
         </Scripts>
+        <Frames>
+            <Button parentKey="Button" inherits="UIPanelButtonTemplate">
+                <Size x="200" y="26"/>
+                <Anchors>
+                    <Anchor point="LEFT" relativeKey="$parent" relativePoint="CENTER" x="-80" y="0"/>
+                </Anchors>
+            </Button>
+        </Frames>
     </Frame>
 </Ui>

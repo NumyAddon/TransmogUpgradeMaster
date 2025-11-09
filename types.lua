@@ -44,3 +44,7 @@
 --- @class SyndicatorCharacterDetails
 --- @field class number # classID
 --- @field className ClassFile
+
+--- @class TransmogUpgradeMaster_SettingsButtonControlMixin : SettingsListElementTemplate, SettingsControlMixin
+--- @field Button UIPanelButtonTemplate
+
