@@ -1,4 +1,6 @@
-local _, ns = ...;
+--- @class TUM_NS
+local ns = select(2, ...);
+
 ---@class TransmogUpgradeMasterData
 local data = {};
 ns.data = data;
@@ -81,7 +83,7 @@ do
         [11969] = TIER_LFR, -- Veteran 1
         [11970] = TIER_LFR, -- Veteran 2
         [11971] = TIER_LFR, -- Veteran 3
-        [11972] = TIER_LFR,    -- Veteran 4
+        [11972] = TIER_LFR, -- Veteran 4
 
         [11973] = TIER_NORMAL, -- Veteran 5
         [11974] = TIER_NORMAL, -- Veteran 6

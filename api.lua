@@ -1,6 +1,6 @@
-local _, ns = ...
+--- @type TUM_NS
+local ns = select(2, ...);
 
---- @type TransmogUpgradeMaster
 local TUM = ns.core
 
 --- The function signatures in this file will remain stable, though no guarantees are made.

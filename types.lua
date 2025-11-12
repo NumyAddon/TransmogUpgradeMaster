@@ -45,6 +45,53 @@
 --- @field class number # classID
 --- @field className ClassFile
 
---- @class TransmogUpgradeMaster_SettingsButtonControlMixin : SettingsListElementTemplate, SettingsControlMixin
---- @field Button UIPanelButtonTemplate
+--- @class TUM_Config_ColorSwatchButton: Button, ColorSwatchTemplate
 
+--- @class TUM_Config_ColorControlMixin : SettingsListElementTemplate, SettingsControlMixin
+--- @field ColorSwatch TUM_Config_ColorSwatchButton
+--- @field data TUM_Config_SettingData
+
+--- @class TUM_Config_ButtonControlMixin : SettingsListElementTemplate
+--- @field Button UIPanelButtonTemplate
+--- @field data TUM_Config_ButtonSettingData
+
+--- @class TUM_Config_ButtonSettingData
+--- @field name string
+--- @field tooltip string
+--- @field buttonText string
+--- @field OnButtonClick fun(button: Button)
+
+--- @class TUM_Config_MultiButtonControlMixin : SettingsListElementTemplate
+--- @field ButtonContainer TUM_Config_MultiButton_ButtonContainer
+--- @field data TUM_Config_MultiButtonSettingData
+
+--- @class TUM_Config_MultiButton_ButtonContainer
+--- @field buttonPool FramePool<UIPanelButtonTemplate>
+
+--- @class TUM_Config_MultiButtonSettingData
+--- @field name string
+--- @field tooltip string
+--- @field buttonTexts string[]
+--- @field OnButtonClick fun(button: Button, buttonIndex: number)
+
+--- @class TUM_Config_TextMixin: Frame, DefaultTooltipMixin
+--- @field Text FontString
+
+--- @class TUM_Config_SettingData
+--- @field setting AddOnSettingMixin
+--- @field name string
+--- @field options table
+--- @field tooltip string
+
+--- @class TUM_Config_SliderOptions: SettingsSliderOptionsMixin
+--- @field minValue number
+--- @field maxValue number
+--- @field steps number
+
+--- @param minValue number? # Minimum value (default: 0)
+--- @param maxValue number? # Maximum value (default: 1)
+--- @param rate number? # Size between steps; Defaults to 100 steps
+--- @return TUM_Config_SliderOptions
+function Settings.CreateSliderOptions(minValue, maxValue, rate) end
+
+--- @alias TUM_Config_DropDownOptions { text: string, label: string?, tooltip: string?, value: any }[]

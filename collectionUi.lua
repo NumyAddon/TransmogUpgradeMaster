@@ -1,6 +1,7 @@
-local addonName, ns = ...;
+local addonName = ...;
+--- @class TUM_NS
+local ns = select(2, ...);
 
---- @type TransmogUpgradeMaster
 local TUM = ns.core;
 
 local isSyndicatorLoaded = C_AddOns.IsAddOnLoaded('Syndicator');

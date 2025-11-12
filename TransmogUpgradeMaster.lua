@@ -1,4 +1,6 @@
-local name, ns = ...
+local name = ...;
+--- @class TUM_NS
+local ns = select(2, ...);
 
 --- @class TransmogUpgradeMaster
 local TUM = {}
@@ -8,9 +10,7 @@ _G.TUM = TUM
 --@end-debug@
 ns.core = TUM
 
---- @type TransmogUpgradeMasterData
 TUM.data = ns.data
---- @type TransmogUpgradeMasterConfig
 TUM.Config = ns.Config
 
 --- @alias TUM_LearnedFromOtherItem "learnedFromOtherItem"
@@ -44,22 +44,26 @@ end
 
 EventUtil.ContinueOnAddOnLoaded(name, function()
     --- @type TransmogUpgradeMaster_CollectionUI
-    TUM.UI = ns.UI
-    TUM.db = TUM.Config:Init()
-    TUM.UI:Init()
-    local currentSeason = C_MythicPlus.GetCurrentSeason()
+    TUM.UI = ns.UI;
+    TUM.db = TUM.Config:Init();
+    TUM.UI:Init();
+    local currentSeason = C_MythicPlus.GetCurrentSeason();
     if currentSeason and currentSeason > 0 then
-        TUM.currentSeason = (currentSeason and currentSeason > 0) and currentSeason or TUM.data.currentSeason
-        TUM.UI:InitSeason(TUM.currentSeason)
+        TUM.currentSeason = (currentSeason and currentSeason > 0 and TUM:IsSeasonSupported(currentSeason))
+            and currentSeason
+            or TUM.data.currentSeason;
+        TUM.UI:InitSeason(TUM.currentSeason);
     else
         RunNextFrame(function()
-            C_MythicPlus.RequestMapInfo()
-        end)
+            C_MythicPlus.RequestMapInfo();
+        end);
         EventUtil.RegisterOnceFrameEventAndCallback('CHALLENGE_MODE_MAPS_UPDATE', function()
-            local currentSeason = C_MythicPlus.GetCurrentSeason()
-            TUM.currentSeason = (currentSeason and currentSeason > 0) and currentSeason or TUM.data.currentSeason
-            TUM.UI:InitSeason(TUM.currentSeason)
-        end)
+            currentSeason = C_MythicPlus.GetCurrentSeason();
+            TUM.currentSeason = (currentSeason and currentSeason > 0 and TUM:IsSeasonSupported(currentSeason))
+                and currentSeason
+                or TUM.data.currentSeason;
+            TUM.UI:InitSeason(TUM.currentSeason);
+        end);
     end
 
     RunNextFrame(function()
@@ -108,6 +112,10 @@ do
     function TransmogUpgradeMaster_OnAddonCompartmentLeave()
         GameTooltip:Hide();
     end
+end
+
+function TUM:IsSeasonSupported(seasonID)
+    return not not TUM.data.catalystItems[seasonID];
 end
 
 ---@param classID number
