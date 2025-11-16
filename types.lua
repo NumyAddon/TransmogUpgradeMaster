@@ -77,6 +77,9 @@
 --- @class TUM_Config_TextMixin: Frame, DefaultTooltipMixin
 --- @field Text FontString
 
+--- @class TUM_Config_HeaderMixin: Frame, DefaultTooltipMixin
+--- @field Title FontString
+
 --- @class TUM_Config_SettingData
 --- @field setting AddOnSettingMixin
 --- @field name string

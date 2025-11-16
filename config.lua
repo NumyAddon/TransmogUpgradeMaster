@@ -273,18 +273,43 @@ do
         return headerInitializer;
     end
 
-    local heightCalculator = UIParent:CreateFontString(nil, "ARTWORK", "GameFontNormal");
-    heightCalculator:SetWidth(635);
+    local calculateHeight;
+    do
+        local heightCalculator = UIParent:CreateFontString(nil, "ARTWORK", "GameFontNormal");
+        local deferrer = CreateFrame("Frame");
+        deferrer:Hide();
+        deferrer.callbacks = {};
+        deferrer:SetScript("OnUpdate", function()
+            for _, callback in pairs(deferrer.callbacks) do
+                securecallfunction(callback);
+            end
+            deferrer.callbacks = {};
+        end);
+        function deferrer:Defer(callback)
+            table.insert(self.callbacks, callback);
+            self:Show();
+        end
+        calculateHeight = function(data, deferred)
+            local text, indent = data.name, data.indent;
+            heightCalculator:SetWidth(635 - (indent * 15));
+            heightCalculator:SetText(text);
+
+            data.extent = heightCalculator:GetStringHeight();
+            if not deferred then
+                deferrer:Defer(function() calculateHeight(data, true); end);
+            end
+        end
+    end
 
     --- @param text string
+    --- @param indent number? # default 0
     --- @return SettingsListElementInitializer
-    function Config:MakeText(text)
-        heightCalculator:SetText(text);
-
+    function Config:MakeText(text, indent)
         local data = {
             name = text,
-            extent = heightCalculator:GetStringHeight(),
+            indent = indent or 0,
         };
+        calculateHeight(data);
         --- @type SettingsListElementInitializer
         local textInitializer = Settings.CreateElementInitializer("TransmogUpgradeMaster_SettingsTextTemplate", data);
 
@@ -473,6 +498,8 @@ do
 
                 return initializer:GetExtent();
             end
+
+            frame:EvaluateVisibility(self.data.expanded);
         end
 
         self.layout:AddInitializer(expandInitializer);
@@ -518,7 +545,7 @@ do
     function Config:MakeDonationPrompt()
         self:MakeText("Addon development takes a large amount of time and effort. If you enjoy using Transmog Upgrade Master, please consider supporting its development by donating. Your support helps ensure the continued improvement and maintenance of the addon. Thank you for your generosity!");
 
-        local function onClick(buttonIndex)
+        local function onClick(_, buttonIndex)
             if buttonIndex == 1 then
                 self:CopyText("https://www.paypal.com/cgi-bin/webscr?hosted_button_id=C8HP9WVKPCL8C&item_name=Transmog+Upgrade+Master&cmd=_s-xclick");
             else
@@ -696,6 +723,25 @@ do
             self.Text:SetText(data.name);
             self.Text:SetHeight(data.extent);
             self:SetHeight(data.extent);
+            local indent = data.indent or 0;
+            self.Text:SetPoint('TOPLEFT', (7 + (indent * 15)), 0);
+        end
+    end
+
+    TransmogUpgradeMaster_SettingsHeaderMixin = CreateFromMixins(DefaultTooltipMixin);
+    do
+        --- @class TUM_Config_HeaderMixin
+        local mixin = TransmogUpgradeMaster_SettingsHeaderMixin;
+
+        function mixin:Init(initializer)
+            local data = initializer:GetData();
+            self.Title:SetTextToFit(data.name);
+            local indent = data.indent or 0;
+            self.Title:SetPoint('TOPLEFT', (7 + (indent * 15)), -16);
+
+            self:SetCustomTooltipAnchoring(self.Title, "ANCHOR_RIGHT");
+
+            self:SetTooltipFunc(function() Settings.InitTooltip(initializer:GetName(), initializer:GetTooltip()) end);
         end
     end
 end
