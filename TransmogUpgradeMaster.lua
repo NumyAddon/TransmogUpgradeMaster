@@ -11,7 +11,7 @@ _G.TUM = TUM
 ns.core = TUM
 
 TUM.data = ns.data
-TUM.Config = ns.Config
+TUM.Config = ns.TUM_Config
 
 --- @alias TUM_LearnedFromOtherItem "learnedFromOtherItem"
 local LEARNED_FROM_OTHER_ITEM = 'learnedFromOtherItem'

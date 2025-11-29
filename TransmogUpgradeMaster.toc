@@ -26,10 +26,10 @@
 ## Category-zhTW: 戰隊收藏
 
 data.lua
+config.xml
 config.lua
 TransmogUpgradeMaster.lua
 
 api.lua
-settingsTemplates.xml
 
 collectionUi.lua
