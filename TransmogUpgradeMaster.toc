@@ -1,4 +1,7 @@
-## Interface: @toc-version-retail@,@toc-version-midnight@,120000
+## Interface: @toc-version-midnight@, @toc-version-retail@
+#@debug@
+## Interface: 120000
+#@end-debug@
 ## Title: Transmog Upgrade Master
 ## Notes: Shows whether you can learn a new appearance by upgrading or catalysing an item.
 ## Author: Numy
