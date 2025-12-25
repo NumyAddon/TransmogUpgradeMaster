@@ -2,6 +2,8 @@ local name = ...;
 --- @class TUM_NS
 local ns = select(2, ...);
 
+local isMidnight = select(4, GetBuildInfo()) >= 120000;
+
 --- @class TransmogUpgradeMaster
 local TUM = {}
 TransmogUpgradeMaster = TUM
@@ -271,6 +273,7 @@ end
 --- @param itemLink string
 --- @return boolean
 function TUM:IsCurrentSeasonItem(itemLink)
+    if isMidnight then return false end -- @todo find a better check for this
     local data = C_TooltipInfo.GetHyperlink(itemLink);
     for _, line in ipairs(data and data.lines or {}) do
         if line and line.leftText and line.leftText:match(ITEM_UPGRADE_TOOLTIP_PATTERN) then

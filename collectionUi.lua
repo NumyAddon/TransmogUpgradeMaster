@@ -3,18 +3,20 @@ local addonName = ...;
 local ns = select(2, ...);
 
 local TUM = ns.core;
+local data = TUM.data;
 
 local isSyndicatorLoaded = C_AddOns.IsAddOnLoaded('Syndicator');
 
 local SEASON_NAMES = {
-    [8] = 'SL S4',
-    [9] = 'DF S1',
-    [10] = 'DF S2',
-    [11] = 'DF S3',
-    [12] = 'DF S4',
-    [13] = 'TWW S1',
-    [14] = 'TWW S2',
-    [15] = 'TWW S3',
+    [data.constants.seasons.SL_S4] = 'SL S4',
+    [data.constants.seasons.DF_S1] = 'DF S1',
+    [data.constants.seasons.DF_S2] = 'DF S2',
+    [data.constants.seasons.DF_S3] = 'DF S3',
+    [data.constants.seasons.DF_S4] = 'DF S4',
+    [data.constants.seasons.TWW_S1] = 'TWW S1',
+    [data.constants.seasons.TWW_S2] = 'TWW S2',
+    [data.constants.seasons.TWW_S3] = 'TWW S3',
+    [data.constants.seasons.MN_S1] = 'MN S1',
 };
 local CATALYST_MARKUP = CreateAtlasMarkup('CreationCatalyst-32x32', 18, 18)
 local UPGRADE_MARKUP = CreateAtlasMarkup('CovenantSanctum-Upgrade-Icon-Available', 18, 18)
@@ -214,13 +216,13 @@ function UI:BuildUI()
             UI.selectedSeason = seasonID;
             UI:DeferUpdateItems();
         end
-        local orderedSeasonIDs = {};
-        for seasonID, _ in pairs(SEASON_NAMES) do
-            table.insert(orderedSeasonIDs, seasonID);
-        end
-        table.sort(orderedSeasonIDs);
         --- @param rootDescription RootMenuDescriptionProxy
         seasonDropdown:SetupMenu(function(_, rootDescription)
+            local orderedSeasonIDs = {};
+            for seasonID, _ in pairs(SEASON_NAMES) do
+                table.insert(orderedSeasonIDs, seasonID);
+            end
+            table.sort(orderedSeasonIDs);
             for _, seasonID in ipairs(orderedSeasonIDs) do
                 rootDescription:CreateRadio(
                     SEASON_NAMES[seasonID],
@@ -570,7 +572,9 @@ function UI:CreateOutfitSlashCommand(tier)
     end
     itemTransmogInfoList[INVSLOT_MAINHAND] = ItemUtil.CreateItemTransmogInfo(4231); -- Knuckleduster, smallest I could find
 
-    return TransmogUtil.CreateOutfitSlashCommand(itemTransmogInfoList);
+    local func = TransmogUtil.CreateCustomSetSlashCommand or TransmogUtil.CreateOutfitSlashCommand;
+
+    return func(itemTransmogInfoList);
 end
 
 function UI:DeferUpdateItems()
