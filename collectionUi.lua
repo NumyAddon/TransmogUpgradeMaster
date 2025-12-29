@@ -41,6 +41,8 @@ function UI:Init()
 
     --- @type nil|table<Enum.InventoryType, table<TUM_Tier, TUM_UI_ResultData[]>>
     self.results = nil;
+    --- @type nil|TUM_UI_ResultData[]
+    self.todoListResults = nil;
     self:BuildUI();
     self:RegisterIntoBlizzMove();
 end
@@ -71,7 +73,7 @@ function UI:BuildUI()
         self:SetScript('OnShow', self.UpdateItems);
         self:SetScript('OnUpdate', self.OnUpdate);
 
-        ButtonFrameTemplate_HidePortrait(self)
+        ButtonFrameTemplate_HidePortrait(self);
         table.insert(UISpecialFrames, self:GetName());
 
         self:Hide();
@@ -139,9 +141,9 @@ function UI:BuildUI()
     end
 
     local classDropdown = CreateFrame('DropdownButton', nil, self, 'WowStyle1DropdownTemplate');
-    self.classDropdown = classDropdown;
+    self.ClassDropdown = classDropdown;
     do
-        classDropdown:SetPoint('TOPRIGHT', self, 'TOPRIGHT', -11, -32);
+        classDropdown:SetPoint('TOPRIGHT', self, 'TOPRIGHT', -18, -32);
         classDropdown:SetWidth(150);
         classDropdown:EnableMouseWheel(true);
         local numClasses = GetNumClasses();
@@ -195,7 +197,7 @@ function UI:BuildUI()
     end
 
     local seasonDropdown = CreateFrame('DropdownButton', nil, self, 'WowStyle1DropdownTemplate');
-    self.seasonDropdown = seasonDropdown;
+    self.SeasonDropdown = seasonDropdown;
     do
         seasonDropdown:SetPoint('RIGHT', classDropdown, 'LEFT', -10, 0);
         seasonDropdown:SetWidth(100);
@@ -238,7 +240,7 @@ function UI:BuildUI()
     local updateButton = CreateFrame('Button', nil, self);
     self.UpdateButton = updateButton;
     do
-        updateButton:SetPoint('RIGHT', self.seasonDropdown, 'LEFT', -6, 0);
+        updateButton:SetPoint('RIGHT', self.SeasonDropdown, 'LEFT', -6, 0);
         updateButton:SetSize(32, 32);
         updateButton:SetHitRectInsets(4, 4, 4, 4);
         updateButton:SetNormalTexture('Interface\\Buttons\\UI-SquareButton-Up');
@@ -286,6 +288,7 @@ function UI:BuildUI()
         end
     end
 
+    -- grid table
     do
         local ROW_HEIGHT = 25;
         local COLUMN_WIDTH = 175;
@@ -480,8 +483,8 @@ function UI:BuildUI()
     end
 
     if not isSyndicatorLoaded then
-        local syndicatorMessage = UI:CreateFontString(nil, 'OVERLAY', 'GameFontNormal');
-        self.syndicatorMessage = syndicatorMessage;
+        local syndicatorMessage = self:CreateFontString(nil, 'OVERLAY', 'GameFontNormal');
+        self.SyndicatorMessage = syndicatorMessage;
         do
             syndicatorMessage:SetPoint('TOPLEFT', self, 'TOPLEFT', 12, -30);
             syndicatorMessage:SetText('Items from the bank or from alts can only be scanned if you have the addon "Syndicator" enabled.');
@@ -532,6 +535,91 @@ function UI:BuildUI()
         end);
         currency:UpdateText();
     end
+
+    local todoList = CreateFrame('Frame', nil, self, 'ButtonFrameTemplate');
+    self.TodoList = todoList;
+    do
+        -- todoList setup
+        do
+            todoList:SetPoint('TOPLEFT', self, 'TOPRIGHT', 0, 0);
+            todoList:SetPoint('BOTTOMLEFT', self, 'BOTTOMRIGHT', 0, 0);
+            todoList:SetWidth(350);
+            todoList.Inset:SetPoint("BOTTOMRIGHT", -4, 4);
+            todoList:SetTitle('Todo list');
+            todoList:EnableMouse(true);
+            todoList:SetScript("OnMouseDown", function() self:Raise() end);
+
+            ButtonFrameTemplate_HidePortrait(todoList);
+
+            if TUM.db.UI_todoListShown == false then
+                todoList:Hide();
+            end
+        end
+
+        local todoListTitleBar = CreateFrame('Frame', nil, todoList, 'PanelDragBarTemplate');
+        todoList.TitleBar = todoListTitleBar;
+        do
+            todoListTitleBar:SetTarget(self);
+            todoListTitleBar:SetPoint('TOPLEFT', 0, 0);
+            todoListTitleBar:SetPoint('BOTTOMRIGHT', todoList, 'TOPRIGHT', 0, -32);
+        end
+
+        local scrollbar = CreateFrame("EventFrame", nil, todoList.Inset, "WowTrimScrollBar");
+        do
+            scrollbar:SetPoint("TOPRIGHT");
+            scrollbar:SetPoint("BOTTOMRIGHT");
+        end
+
+        local scrollbox = CreateFrame("Frame", nil, todoList.Inset, "WowScrollBoxList");
+        do
+            scrollbox:SetPoint("TOPLEFT", 6, -3);
+            scrollbox:SetPoint("BOTTOMRIGHT", scrollbar, "BOTTOMLEFT", -2, 5);
+        end
+
+        local scrollView = CreateScrollBoxListLinearView();
+        do
+            scrollView:SetElementExtent(20); -- Fixed height for each row; required as we're not using XML.
+            scrollView:SetElementInitializer("Button", function(frame, entry)
+                self:InitTodoListEntry(frame, entry);
+            end);
+        end
+
+        ScrollUtil.InitScrollBoxWithScrollBar(scrollbox, scrollbar, scrollView);
+
+        --- @param dataProvider DataProviderMixin
+        function todoList:SetDataProvider(dataProvider)
+            scrollbox:SetDataProvider(dataProvider);
+        end
+
+        local toggleTodoListButton = CreateFrame("Button", nil, self, "WowStyle2IconButtonTemplate");
+        self.ToggleTodoListButton = toggleTodoListButton;
+        do
+            toggleTodoListButton:SetSize(22, 22);
+            toggleTodoListButton:SetFrameStrata("HIGH");
+            toggleTodoListButton.normalAtlas = TUM.db.UI_todoListShown and "common-dropdown-icon-back" or "common-dropdown-icon-next";
+            toggleTodoListButton:SetPoint("RIGHT", self, "TOPRIGHT", 10, -48);
+            toggleTodoListButton:HookScript("OnEnter", function()
+                GameTooltip:SetOwner(toggleTodoListButton, "ANCHOR_RIGHT");
+                GameTooltip:SetText("Toggle Todo List");
+                GameTooltip:Show();
+            end);
+            toggleTodoListButton:HookScript("OnLeave", function() GameTooltip:Hide(); end);
+            toggleTodoListButton:HookScript("OnClick", function() todoList:SetShown(not todoList:IsShown()); end);
+            toggleTodoListButton:OnButtonStateChanged();
+        end
+
+        todoList:HookScript("OnShow", function()
+            toggleTodoListButton.normalAtlas = "common-dropdown-icon-back";
+            toggleTodoListButton:OnButtonStateChanged();
+            TUM.db.UI_todoListShown = true;
+        end);
+        todoList:HookScript("OnHide", function()
+            toggleTodoListButton.normalAtlas = "common-dropdown-icon-next";
+            toggleTodoListButton:OnButtonStateChanged();
+            TUM.db.UI_todoListShown = false;
+        end);
+    end
+
 end
 
 function UI:ToggleUI()
@@ -542,17 +630,24 @@ function UI:RegisterIntoBlizzMove()
     --- @type BlizzMoveAPI?
     local BlizzMoveAPI = BlizzMoveAPI; ---@diagnostic disable-line: undefined-global
     if BlizzMoveAPI then
+        local frameName = self:GetName();
         BlizzMoveAPI:RegisterAddOnFrames(
             {
                 [addonName] = {
                     [self:GetName()] = {
                         SubFrames = {
-                            [self:GetName() .. '.TitleBar'] = {},
+                            [frameName .. '.TitleBar'] = {},
+                            [frameName .. '.TodoList'] = {
+                                Detachable = true,
+                                SubFrames = {
+                                    [frameName .. '.TodoList.TitleBar'] = {},
+                                },
+                            },
                         },
                     },
                 },
             }
-        )
+        );
     end
 end
 
@@ -648,7 +743,52 @@ function UI:OnUpdate()
                 end
             end
         end
+
+        local dataProvider = CreateDataProvider(self.todoListResults)
+        self.TodoList:SetDataProvider(dataProvider);
     end
+end
+
+--- @param frame TUM_UI_TodoList_ElementFrame
+--- @param entry TUM_UI_ResultData
+function UI:InitTodoListEntry(frame, entry)
+    --- @class TUM_UI_TodoList_ElementFrame
+    local frame = frame;
+
+    if not frame.Text then
+        frame.Text = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
+        frame.Text:SetJustifyH("LEFT");
+        frame.Text:SetAllPoints(frame);
+    end
+
+    if not frame.HighlightBackground then
+        frame.HighlightBackground = frame:CreateTexture(nil, "BACKGROUND");
+        frame.HighlightBackground:SetAllPoints(frame);
+        frame.HighlightBackground:Hide();
+        frame.HighlightBackground:SetColorTexture(1, 1, 1, 0.1);
+    end
+
+    local text = UPGRADE_MARKUP .. ' ' .. entry.itemLink;
+    if entry.distance > 0 then
+        text = WARBAND_MARKUP .. ' ' .. text;
+    end
+    if entry.upgradeLevel > 0 then
+        text = text .. (' %d/%d'):format(entry.upgradeLevel, entry.maxUpgradeLevel);
+    end
+
+    frame.Text:SetText(text);
+    frame:SetScript("OnEnter", function()
+        GameTooltip:SetOwner(frame, "ANCHOR_RIGHT", -80, 0);
+        GameTooltip:AddDoubleLine("Location", entry.location, 1, 1, 1, 1, 1, 1);
+        GameTooltip:AppendInfoWithSpacer("GetHyperlink", entry.itemLink);
+        GameTooltip:Show();
+        frame.HighlightBackground:Show();
+    end);
+
+    frame:SetScript("OnLeave", function()
+        GameTooltip:Hide();
+        frame.HighlightBackground:Hide();
+    end);
 end
 
 local ARMOR_SEARCH_TERMS = {
@@ -703,8 +843,9 @@ end
 --- @param scanResult SyndicatorSearchResult
 --- @param classID number
 --- @param seasonID number
---- @return nil|TUM_UI_ResultData info
---- @return nil|TUM_UI_ResultData upgradedInfo
+--- @return nil|TUM_UI_ResultData catalystInfo
+--- @return nil|TUM_UI_ResultData upgradedCatalystInfo
+--- @return nil|TUM_UI_ResultData upgradeInfo
 local function checkResult(scanResult, classID, seasonID)
     if
         scanResult.source.guild -- ignore guild banks, might add some filter setting later
@@ -781,7 +922,8 @@ local function checkResult(scanResult, classID, seasonID)
         };
     end
 
-    if tumResult.catalystUpgradeAppearanceMissing or (isItemCatalysed and tumResult.upgradeAppearanceMissing) then
+    local upgradeIsCatalyst = tumResult.catalystUpgradeAppearanceMissing or (isItemCatalysed and tumResult.upgradeAppearanceMissing);
+    if tumResult.catalystUpgradeAppearanceMissing or tumResult.upgradeAppearanceMissing then
         --- @type TUM_UI_ResultData
         upgradedInfo = {
             slot = itemSlot,
@@ -797,7 +939,7 @@ local function checkResult(scanResult, classID, seasonID)
         };
     end
 
-    return info, upgradedInfo;
+    return info, upgradeIsCatalyst and upgradedInfo, tumResult.upgradeAppearanceMissing and upgradedInfo;
 end
 
 --- @param result SyndicatorSearchResult
@@ -807,15 +949,18 @@ local function handleResult(result)
     end
     local item = Item:CreateFromItemLink(result.itemLink);
     item:ContinueOnItemLoad(function()
-        local info, upgradeInfo = checkResult(result, UI.selectedClass, UI.selectedSeason);
-        if info or upgradeInfo then
+        local catalystInfo, upgradedCatalystInfo, upgradeInfo = checkResult(result, UI.selectedClass, UI.selectedSeason);
+        if catalystInfo or upgradeInfo then
             UI.deferNewResult = true;
         end
-        if info then
-            tinsert(UI.results[info.slot][info.tier], info);
+        if catalystInfo then
+            tinsert(UI.results[catalystInfo.slot][catalystInfo.tier], catalystInfo);
+        end
+        if upgradedCatalystInfo then
+            tinsert(UI.results[upgradedCatalystInfo.slot][upgradedCatalystInfo.tier], upgradedCatalystInfo);
         end
         if upgradeInfo then
-            tinsert(UI.results[upgradeInfo.slot][upgradeInfo.tier], upgradeInfo);
+            tinsert(UI.todoListResults, upgradeInfo);
         end
     end);
 end
@@ -827,6 +972,7 @@ function UI:UpdateItems()
     end
     self.pending = self.selectedClass .. '|' .. self.selectedSeason;
     self.results = initResults();
+    self.todoListResults = {};
     self.deferNewResult = true;
     if isSyndicatorLoaded then
         local term = buildSyndicatorSearchTerm(self.selectedClass);

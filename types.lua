@@ -21,6 +21,8 @@
 --- @field maxUpgradeLevel number # 6 or 8
 --- @field distance number # 0 = same character, 100+ = warband bank, 1000 = different character.
 
+--- @class TUM_UI_TodoList_ElementFrame: Button
+
 --- @class TUM_AppearanceMissingResult
 --- @field canCatalyse boolean? # whether the item can be catalysed; if false, the catalystAppearanceMissing values will be nil
 --- @field canUpgrade boolean? # whether the item can be upgraded to the next tier; if false, the upgradeAppearanceMissing values will be nil

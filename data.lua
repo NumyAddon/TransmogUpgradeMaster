@@ -148,19 +148,19 @@ do
     local MAIL = Enum.ItemArmorSubclass.Mail;
     local PLATE = Enum.ItemArmorSubclass.Plate;
     data.constants.classArmorTypeMap = {
-        [1] = PLATE, -- WARRIOR
-        [2] = PLATE, -- PALADIN
-        [3] = MAIL, -- HUNTER
-        [4] = LEATHER, -- ROGUE
-        [5] = CLOTH, -- PRIEST
-        [6] = PLATE, -- DEATHKNIGHT
-        [7] = MAIL, -- SHAMAN
-        [8] = CLOTH, -- MAGE
-        [9] = CLOTH, -- WARLOCK
-        [10] = LEATHER, -- MONK
-        [11] = LEATHER, -- DRUID
-        [12] = LEATHER, -- DEMONHUNTER
-        [13] = MAIL, -- EVOKER
+        [WARRIOR] = PLATE,
+        [PALADIN] = PLATE,
+        [HUNTER] = MAIL,
+        [ROGUE] = LEATHER,
+        [PRIEST] = CLOTH,
+        [DEATHKNIGHT] = PLATE,
+        [SHAMAN] = MAIL,
+        [MAGE] = CLOTH,
+        [WARLOCK] = CLOTH,
+        [MONK] = LEATHER,
+        [DRUID] = LEATHER,
+        [DEMONHUNTER] = LEATHER,
+        [EVOKER] = MAIL,
     };
 
     data.constants.catalystSlots = {

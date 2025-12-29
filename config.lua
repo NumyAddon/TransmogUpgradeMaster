@@ -33,7 +33,6 @@ TUM_Config.settingKeys = {
     warbandCatalystClassList = "warbandCatalystClassList",
     autoConfirmCatalyst = "autoConfirmCatalyst",
     debug = "debug",
-    UI_treatOtherItemAsCollected = "UI_treatOtherItemAsCollected",
 };
 
 --- @return TUM_DB
@@ -61,6 +60,8 @@ function TUM_Config:Init()
         autoConfirmCatalyst = self.autoConfirmCatalystOptions.previousSeason,
         --- @type boolean
         UI_treatOtherItemAsCollected = false,
+        --- @type boolean
+        UI_todoListShown = true,
     };
     TransmogUpgradeMasterDB = TransmogUpgradeMasterDB or {};
     --- @type TUM_DB
