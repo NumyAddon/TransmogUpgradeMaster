@@ -20,6 +20,7 @@ local SEASON_NAMES = {
 };
 local CATALYST_MARKUP = CreateAtlasMarkup('CreationCatalyst-32x32', 18, 18)
 local UPGRADE_MARKUP = CreateAtlasMarkup('CovenantSanctum-Upgrade-Icon-Available', 18, 18)
+local CATALYST_UPGRADE_MARKUP = CreateSimpleTextureMarkup([[Interface\AddOns\TransmogUpgradeMaster\media\CatalystUpgrade.png]], 18, 18)
 local WARBAND_MARKUP = CreateAtlasMarkup('warbands-icon', 18, 18)
 local OK_MARKUP = "|TInterface\\RaidFrame\\ReadyCheck-Ready:0|t"
 local NOK_MARKUP = "|TInterface\\RaidFrame\\ReadyCheck-NotReady:0|t"
@@ -32,6 +33,10 @@ local playerFullName;
 local UI = CreateFrame('Frame', 'TransmogUpgradeMaster_CollectionUI', UIParent, 'ButtonFrameTemplate');
 ns.UI = UI;
 
+--- @class TUM_UI_TodoList: Frame, ButtonFrameTemplate
+local TodoList = CreateFrame('Frame', nil, UI, 'ButtonFrameTemplate');
+UI.TodoList = TodoList;
+
 function UI:Init()
     playerFullName = UnitNameUnmodified('player') .. '-' .. GetRealmName();
 
@@ -41,10 +46,13 @@ function UI:Init()
 
     --- @type nil|table<Enum.InventoryType, table<TUM_Tier, TUM_UI_ResultData[]>>
     self.results = nil;
-    --- @type nil|TUM_UI_ResultData[]
-    self.todoListResults = nil;
     self:BuildUI();
     self:RegisterIntoBlizzMove();
+    self:RegisterEvent("TRANSMOG_COLLECTION_UPDATED");
+    self:SetScript("OnEvent", function()
+        self:DeferUpdateItems();
+        TodoList:DeferUpdateItems();
+    end);
 end
 
 function UI:InitSeason(currentSeasonID)
@@ -409,10 +417,11 @@ function UI:BuildUI()
                 for _, result in ipairs(column.results) do
                     local text = result.itemLink;
 
-                    if result.requiresUpgrade then
+                    if result.requiresUpgrade and result.requiresCatalyse then
+                        text = CATALYST_UPGRADE_MARKUP .. ' ' .. text;
+                    elseif result.requiresUpgrade then
                         text = UPGRADE_MARKUP .. ' ' .. text;
-                    end
-                    if result.requiresCatalyse then
+                    elseif result.requiresCatalyse then
                         text = CATALYST_MARKUP .. ' ' .. text;
                     end
                     if result.distance > 0 then
@@ -536,24 +545,27 @@ function UI:BuildUI()
         currency:UpdateText();
     end
 
-    local todoList = CreateFrame('Frame', nil, self, 'ButtonFrameTemplate');
-    self.TodoList = todoList;
+    --- @class TUM_UI_TodoList: Frame, ButtonFrameTemplate
+    local todoList = self.TodoList;
     do
         -- todoList setup
         do
             todoList:SetPoint('TOPLEFT', self, 'TOPRIGHT', 0, 0);
             todoList:SetPoint('BOTTOMLEFT', self, 'BOTTOMRIGHT', 0, 0);
-            todoList:SetWidth(350);
+            todoList:SetWidth(540);
             todoList.Inset:SetPoint("BOTTOMRIGHT", -4, 4);
             todoList:SetTitle('Todo list');
             todoList:EnableMouse(true);
             todoList:SetScript("OnMouseDown", function() self:Raise() end);
 
+            todoList.results = {};
             ButtonFrameTemplate_HidePortrait(todoList);
 
             if TUM.db.UI_todoListShown == false then
                 todoList:Hide();
             end
+            todoList:SetScript('OnShow', todoList.UpdateItems);
+            todoList:SetScript('OnUpdate', todoList.OnUpdate);
         end
 
         local todoListTitleBar = CreateFrame('Frame', nil, todoList, 'PanelDragBarTemplate');
@@ -562,6 +574,57 @@ function UI:BuildUI()
             todoListTitleBar:SetTarget(self);
             todoListTitleBar:SetPoint('TOPLEFT', 0, 0);
             todoListTitleBar:SetPoint('BOTTOMRIGHT', todoList, 'TOPRIGHT', 0, -32);
+        end
+
+        local todoUpdateButton = CreateFrame('Button', nil, todoList);
+        self.UpdateButton = todoUpdateButton;
+        do
+            todoUpdateButton:SetPoint('TOPRIGHT', todoList, 'TOPRIGHT', -22, -26);
+            todoUpdateButton:SetSize(32, 32);
+            todoUpdateButton:SetHitRectInsets(4, 4, 4, 4);
+            todoUpdateButton:SetNormalTexture('Interface\\Buttons\\UI-SquareButton-Up');
+            todoUpdateButton:SetPushedTexture('Interface\\Buttons\\UI-SquareButton-Down');
+            todoUpdateButton:SetDisabledTexture('Interface\\Buttons\\UI-SquareButton-Disabled');
+            todoUpdateButton:SetHighlightTexture('Interface\\Buttons\\UI-Common-MouseHilight', 'ADD');
+
+            local updateIcon = todoUpdateButton:CreateTexture('OVERLAY');
+            todoUpdateButton.Icon = updateIcon;
+            do
+                updateIcon:SetSize(16, 16);
+                updateIcon:SetPoint('CENTER', -1, -1);
+                updateIcon:SetBlendMode('ADD');
+                updateIcon:SetTexture('Interface\\Buttons\\UI-RefreshButton');
+
+                todoUpdateButton:SetScript('OnEnter', function(self)
+                    GameTooltip:SetOwner(self, 'ANCHOR_RIGHT', -6, -4);
+                    GameTooltip:AddLine('Refresh');
+                    GameTooltip:Show();
+                end);
+
+                todoUpdateButton:SetScript('OnLeave', function()
+                    GameTooltip:Hide();
+                end);
+
+                todoUpdateButton:SetScript('OnMouseDown', function(self)
+                    if self:IsEnabled() then
+                        self.Icon:SetPoint('CENTER', 1, 1);
+                    end
+                end);
+
+                todoUpdateButton:SetScript('OnMouseUp', function(self)
+                    if self:IsEnabled() then
+                        self.Icon:SetPoint('CENTER', -1, -1);
+                    end
+                end);
+
+                todoUpdateButton:SetScript('OnClick', function()
+                    TodoList:DeferUpdateItems();
+                end);
+
+                todoUpdateButton:SetScript('OnShow', function(self)
+                    self.Icon:SetPoint('CENTER', -1, -1);
+                end);
+            end
         end
 
         local scrollbar = CreateFrame("EventFrame", nil, todoList.Inset, "WowTrimScrollBar");
@@ -580,7 +643,7 @@ function UI:BuildUI()
         do
             scrollView:SetElementExtent(20); -- Fixed height for each row; required as we're not using XML.
             scrollView:SetElementInitializer("Button", function(frame, entry)
-                self:InitTodoListEntry(frame, entry);
+                todoList:InitTodoListEntry(frame, entry);
             end);
         end
 
@@ -611,12 +674,12 @@ function UI:BuildUI()
         todoList:HookScript("OnShow", function()
             toggleTodoListButton.normalAtlas = "common-dropdown-icon-back";
             toggleTodoListButton:OnButtonStateChanged();
-            TUM.db.UI_todoListShown = true;
+            TUM.db.UI_todoListShown = todoList:IsShown();
         end);
         todoList:HookScript("OnHide", function()
             toggleTodoListButton.normalAtlas = "common-dropdown-icon-next";
             toggleTodoListButton:OnButtonStateChanged();
-            TUM.db.UI_todoListShown = false;
+            TUM.db.UI_todoListShown = todoList:IsShown();
         end);
     end
 
@@ -728,10 +791,11 @@ function UI:OnUpdate()
                                 return a.itemLink > b.itemLink;
                             end);
                             local firstResult = results[1];
-                            if firstResult.requiresUpgrade then
+                            if firstResult.requiresUpgrade and firstResult.requiresCatalyse then
+                                text = ' ' .. CATALYST_UPGRADE_MARKUP .. text;
+                            elseif firstResult.requiresUpgrade then
                                 text = ' ' .. UPGRADE_MARKUP .. text;
-                            end
-                            if firstResult.requiresCatalyse then
+                            elseif firstResult.requiresCatalyse then
                                 text = ' ' .. CATALYST_MARKUP .. text;
                             end
                             if firstResult.distance > 0 then
@@ -743,22 +807,64 @@ function UI:OnUpdate()
                 end
             end
         end
+    end
+end
 
-        local dataProvider = CreateDataProvider(self.todoListResults)
-        self.TodoList:SetDataProvider(dataProvider);
+function TodoList:DeferUpdateItems()
+    self.deferUpdate = true;
+end
+
+function TodoList:OnUpdate()
+    if self.deferUpdate then
+        self.deferUpdate = false;
+        self:UpdateItems();
+    end
+    if self.deferNewResult then
+        self.deferNewResult = false;
+
+        local dataProvider = CreateDataProvider(self.results)
+        dataProvider:SetSortComparator(function(entryA, entryB)
+            if entryA.distance ~= entryB.distance then
+                return entryA.distance < entryB.distance;
+            end
+            if entryA.location ~= entryB.location then
+                return entryA.location < entryB.location;
+            end
+            if entryA.upgradeLevel ~= entryB.upgradeLevel then
+                return entryA.upgradeLevel > entryB.upgradeLevel;
+            end
+            return entryA.itemLink < entryB.itemLink;
+        end);
+        self:SetDataProvider(dataProvider);
     end
 end
 
 --- @param frame TUM_UI_TodoList_ElementFrame
 --- @param entry TUM_UI_ResultData
-function UI:InitTodoListEntry(frame, entry)
+function TodoList:InitTodoListEntry(frame, entry)
     --- @class TUM_UI_TodoList_ElementFrame
     local frame = frame;
 
-    if not frame.Text then
-        frame.Text = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
-        frame.Text:SetJustifyH("LEFT");
-        frame.Text:SetAllPoints(frame);
+    if not frame.ItemText then
+        frame.ItemText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
+        frame.ItemText:SetJustifyH("LEFT");
+        frame.ItemText:SetPoint("TOPLEFT", frame, "TOPLEFT");
+        frame.ItemText:SetWidth(270);
+        frame.ItemText:SetWordWrap(false);
+    end
+    if not frame.LocationCharacterText then
+        frame.LocationCharacterText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
+        frame.LocationCharacterText:SetJustifyH("LEFT");
+        frame.LocationCharacterText:SetPoint("TOPLEFT", frame.ItemText, "TOPRIGHT", 5, 0);
+        frame.LocationCharacterText:SetWidth(160);
+        frame.LocationCharacterText:SetWordWrap(false);
+    end
+    if not frame.LocationContainerText then
+        frame.LocationContainerText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
+        frame.LocationContainerText:SetJustifyH("LEFT");
+        frame.LocationContainerText:SetPoint("TOPLEFT", frame.LocationCharacterText, "TOPRIGHT", 5, 0);
+        frame.LocationContainerText:SetPoint("TOPRIGHT", frame, "TOPRIGHT");
+        frame.LocationContainerText:SetWordWrap(false);
     end
 
     if not frame.HighlightBackground then
@@ -776,7 +882,9 @@ function UI:InitTodoListEntry(frame, entry)
         text = text .. (' %d/%d'):format(entry.upgradeLevel, entry.maxUpgradeLevel);
     end
 
-    frame.Text:SetText(text);
+    frame.ItemText:SetText(text);
+    frame.LocationCharacterText:SetText(entry.locationCharacter);
+    frame.LocationContainerText:SetText(entry.locationContainer);
     frame:SetScript("OnEnter", function()
         GameTooltip:SetOwner(frame, "ANCHOR_RIGHT", -80, 0);
         GameTooltip:AddDoubleLine("Location", entry.location, 1, 1, 1, 1, 1, 1);
@@ -808,22 +916,29 @@ local SLOT_SEARCH_TERMS = {
     [Enum.InventoryType.IndexHandType] = '#hands',
     [Enum.InventoryType.IndexCloakType] = '#back',
 };
-local function buildSyndicatorSearchTerm(classID)
+
+--- @param classID number?
+--- @param activeSeasonOnly boolean?
+--- @param includeAllItems boolean?
+--- @return string searchTerm
+local function buildSyndicatorSearchTerm(classID, activeSeasonOnly, includeAllItems)
     local slotTerms = {};
     for slot, term in pairs(SLOT_SEARCH_TERMS) do
         if slot ~= Enum.InventoryType.IndexCloakType then
             tinsert(slotTerms, term);
         end
     end
-    local armorType = TUM.data.constants.classArmorTypeMap[classID];
+    local armorType = classID and TUM.data.constants.classArmorTypeMap[classID];
+
     local searchTerms = string.format(
-        '%s|(%s&(%s))',
+        '%s%s|(%s(%s))',
+        includeAllItems and '(#weapon|#shields|#off-hand)|' or '',
         SLOT_SEARCH_TERMS[Enum.InventoryType.IndexCloakType],
-        ARMOR_SEARCH_TERMS[armorType],
+        includeAllItems and '' or ('(%s)&'):format(ARMOR_SEARCH_TERMS[armorType]),
         table.concat(slotTerms, '|')
     );
 
-    return string.format('#epic&((%s)|(#tier token))', searchTerms);
+    return string.format('%s#epic&((%s)|#tier token)', activeSeasonOnly and '#active season&' or '', searchTerms);
 end
 
 local function initResults()
@@ -845,7 +960,6 @@ end
 --- @param seasonID number
 --- @return nil|TUM_UI_ResultData catalystInfo
 --- @return nil|TUM_UI_ResultData upgradedCatalystInfo
---- @return nil|TUM_UI_ResultData upgradeInfo
 local function checkResult(scanResult, classID, seasonID)
     if
         scanResult.source.guild -- ignore guild banks, might add some filter setting later
@@ -855,21 +969,21 @@ local function checkResult(scanResult, classID, seasonID)
     end
 
     local scanClassFile = playerClassFile;
-    local characterInfo = isSyndicatorLoaded and Syndicator.API.GetCharacter(scanResult.source.character);
+    local characterInfo = isSyndicatorLoaded and Syndicator.API.GetCharacter(scanResult.source.character); ---@diagnostic disable-line: undefined-global
     if characterInfo then
         scanClassFile = characterInfo.details.className;
     end
 
-    local isToken = scanResult.itemID and TUM:IsToken(scanResult.itemID)
-    local tokenInfo = isToken and TUM:GetTokenInfo(scanResult.itemID, scanResult.itemLink)
+    local isToken = scanResult.itemID and TUM:IsToken(scanResult.itemID);
+    local tokenInfo = isToken and TUM:GetTokenInfo(scanResult.itemID, scanResult.itemLink);
     if tokenInfo and (not tokenInfo.classList[classID] or tokenInfo.season ~= seasonID) then
         return;
     end
 
-    local itemSlot = tokenInfo and tokenInfo.slot or C_Item.GetItemInventoryTypeByID(scanResult.itemLink)
+    local itemSlot = tokenInfo and tokenInfo.slot or C_Item.GetItemInventoryTypeByID(scanResult.itemLink);
     if itemSlot == Enum.InventoryType.IndexRobeType then
         -- robes catalyse into chest pieces
-        itemSlot = Enum.InventoryType.IndexChestType
+        itemSlot = Enum.InventoryType.IndexChestType;
     end
 
     local isItemCatalysed = TUM:IsItemCatalysed(scanResult.itemID);
@@ -885,25 +999,32 @@ local function checkResult(scanResult, classID, seasonID)
     end
 
     local tumResult = TUM:IsAppearanceMissing(scanResult.itemLink, classID);
+    if
+        not tumResult.catalystAppearanceMissing
+        and not tumResult.catalystUpgradeAppearanceMissing
+        and not (isItemCatalysed and tumResult.upgradeAppearanceMissing)
+    then
+        return;
+    end
 
-    local location;
+    local location, locationCharacter, locationContainer;
     local distance = 0;
     if scanResult.source.character then
-        local classColor = C_ClassColor.GetClassColor(scanClassFile)
-        local classFile = C_CreatureInfo.GetClassInfo(classID).classFile
-        location = string.format(
-            '%s: %s',
-            classColor:WrapTextInColorCode(scanResult.source.character),
-            scanResult.source.container
-        );
+        local classColor = C_ClassColor.GetClassColor(scanClassFile);
+        local classFile = C_CreatureInfo.GetClassInfo(classID).classFile;
+        locationCharacter = classColor:WrapTextInColorCode(scanResult.source.character);
+        locationContainer = scanResult.source.container;
+        location = string.format('%s: %s', locationCharacter, locationContainer);
         distance = scanClassFile ~= classFile and 1000 or 0;
     elseif scanResult.source.warband then
         location = CreateAtlasMarkup('warbands-icon', 17, 13) .. ' Warband bank';
+        locationContainer = '';
+        locationCharacter = location;
         distance = 100 + scanResult.source.warband;
     end
-    local upgradeInfo = C_Item.GetItemUpgradeInfo(scanResult.itemLink)
-    local upgradeLevel = upgradeInfo and upgradeInfo.currentLevel or 0
-    local maxUpgradeLevel = upgradeInfo and upgradeInfo.maxLevel or 0
+    local upgradeInfo = C_Item.GetItemUpgradeInfo(scanResult.itemLink);
+    local upgradeLevel = upgradeInfo and upgradeInfo.currentLevel or 0;
+    local maxUpgradeLevel = upgradeInfo and upgradeInfo.maxLevel or 0;
 
     local info, upgradedInfo;
     if not isItemCatalysed and tumResult.catalystAppearanceMissing then
@@ -916,14 +1037,15 @@ local function checkResult(scanResult, classID, seasonID)
             requiresUpgrade = false,
             itemLink = scanResult.itemLink,
             location = location,
+            locationCharacter = locationCharacter,
+            locationContainer = locationContainer,
             distance = distance,
             upgradeLevel = upgradeLevel,
             maxUpgradeLevel = maxUpgradeLevel,
         };
     end
 
-    local upgradeIsCatalyst = tumResult.catalystUpgradeAppearanceMissing or (isItemCatalysed and tumResult.upgradeAppearanceMissing);
-    if tumResult.catalystUpgradeAppearanceMissing or tumResult.upgradeAppearanceMissing then
+    if tumResult.catalystUpgradeAppearanceMissing or (isItemCatalysed and tumResult.upgradeAppearanceMissing) then
         --- @type TUM_UI_ResultData
         upgradedInfo = {
             slot = itemSlot,
@@ -933,34 +1055,107 @@ local function checkResult(scanResult, classID, seasonID)
             requiresUpgrade = true,
             itemLink = scanResult.itemLink,
             location = location,
+            locationCharacter = locationCharacter,
+            locationContainer = locationContainer,
             distance = distance,
             upgradeLevel = upgradeLevel,
             maxUpgradeLevel = maxUpgradeLevel,
         };
     end
 
-    return info, upgradeIsCatalyst and upgradedInfo, tumResult.upgradeAppearanceMissing and upgradedInfo;
+    return info, upgradedInfo;
+end
+
+--- @param scanResult SyndicatorSearchResult
+--- @return nil|TUM_UI_ResultData upgradeInfo
+local function checkUpgradeResult(scanResult)
+    if
+        scanResult.source.guild -- ignore guild banks, might add some filter setting later
+    then
+        return;
+    end
+
+    local scanClassFile = playerClassFile;
+    local characterInfo = isSyndicatorLoaded and Syndicator.API.GetCharacter(scanResult.source.character); ---@diagnostic disable-line: undefined-global
+    if characterInfo then
+        scanClassFile = characterInfo.details.className;
+    end
+
+    local isToken = scanResult.itemID and TUM:IsToken(scanResult.itemID)
+    local tokenInfo = isToken and TUM:GetTokenInfo(scanResult.itemID, scanResult.itemLink)
+    if tokenInfo then
+        return;
+    end
+
+    local tumResult = TUM:IsAppearanceMissing(scanResult.itemLink);
+    if not tumResult.upgradeAppearanceMissing then
+        return;
+    end
+
+    local location, locationCharacter, locationContainer;
+    local distance = 0;
+    if scanResult.source.character then
+        local classColor = C_ClassColor.GetClassColor(scanClassFile)
+        locationCharacter = classColor:WrapTextInColorCode(scanResult.source.character);
+        locationContainer = scanResult.source.container;
+        location = string.format('%s: %s', locationCharacter, locationContainer);
+        distance = scanResult.source.character ~= playerFullName and 1000 or 0;
+    elseif scanResult.source.warband then
+        location = CreateAtlasMarkup('warbands-icon', 17, 13) .. ' Warband bank';
+        locationContainer = '';
+        locationCharacter = location;
+        distance = 100 + scanResult.source.warband;
+    end
+    local upgradeInfo = C_Item.GetItemUpgradeInfo(scanResult.itemLink);
+    local upgradeLevel = upgradeInfo and upgradeInfo.currentLevel or 0;
+    local maxUpgradeLevel = upgradeInfo and upgradeInfo.maxLevel or 0;
+    local itemSlot = tokenInfo and tokenInfo.slot or C_Item.GetItemInventoryTypeByID(scanResult.itemLink)
+    if itemSlot == Enum.InventoryType.IndexRobeType then
+        -- robes catalyse into chest pieces
+        itemSlot = Enum.InventoryType.IndexChestType;
+    end
+
+    --- @type TUM_UI_ResultData
+    return {
+        slot = itemSlot,
+        tier = tumResult.contextData.tier + 1,
+        knownFromOtherItem = tumResult.upgradeAppearanceLearnedFromOtherItem,
+        requiresCatalyse = false,
+        requiresUpgrade = true,
+        itemLink = scanResult.itemLink,
+        location = location,
+        locationCharacter = locationCharacter,
+        locationContainer = locationContainer,
+        distance = distance,
+        upgradeLevel = upgradeLevel,
+        maxUpgradeLevel = maxUpgradeLevel,
+    };
 end
 
 --- @param result SyndicatorSearchResult
-local function handleResult(result)
+local function handleResult(result, isTodoList)
     if LinkUtil.ExtractLink(result.itemLink) ~= 'item' then
         return;
     end
     local item = Item:CreateFromItemLink(result.itemLink);
     item:ContinueOnItemLoad(function()
-        local catalystInfo, upgradedCatalystInfo, upgradeInfo = checkResult(result, UI.selectedClass, UI.selectedSeason);
-        if catalystInfo or upgradeInfo then
-            UI.deferNewResult = true;
-        end
-        if catalystInfo then
-            tinsert(UI.results[catalystInfo.slot][catalystInfo.tier], catalystInfo);
-        end
-        if upgradedCatalystInfo then
-            tinsert(UI.results[upgradedCatalystInfo.slot][upgradedCatalystInfo.tier], upgradedCatalystInfo);
-        end
-        if upgradeInfo then
-            tinsert(UI.todoListResults, upgradeInfo);
+        if not isTodoList then
+            local catalystInfo, upgradedCatalystInfo = checkResult(result, UI.selectedClass, UI.selectedSeason);
+            if catalystInfo or upgradedCatalystInfo then
+                UI.deferNewResult = true;
+            end
+            if catalystInfo then
+                tinsert(UI.results[catalystInfo.slot][catalystInfo.tier], catalystInfo);
+            end
+            if upgradedCatalystInfo then
+                tinsert(UI.results[upgradedCatalystInfo.slot][upgradedCatalystInfo.tier], upgradedCatalystInfo);
+            end
+        else
+            local upgradeInfo = checkUpgradeResult(result);
+            if upgradeInfo then
+                TodoList.deferNewResult = true;
+                tinsert(TodoList.results, upgradeInfo);
+            end
         end
     end);
 end
@@ -972,7 +1167,6 @@ function UI:UpdateItems()
     end
     self.pending = self.selectedClass .. '|' .. self.selectedSeason;
     self.results = initResults();
-    self.todoListResults = {};
     self.deferNewResult = true;
     if isSyndicatorLoaded then
         local term = buildSyndicatorSearchTerm(self.selectedClass);
@@ -1023,6 +1217,70 @@ function UI:UpdateItems()
                     quality = item:GetItemQuality(),
                 };
                 handleResult(result);
+            end);
+        end
+        self.pending = nil;
+    end
+end
+
+function TodoList:UpdateItems()
+    self.deferUpdate = false;
+    if self.pending then return; end
+    self.pending = true;
+    self.results = {};
+    self.deferNewResult = true;
+    if isSyndicatorLoaded then
+        local term = buildSyndicatorSearchTerm(nil, true, true);
+        --- @param results SyndicatorSearchResult[]
+        Syndicator.Search.RequestSearchEverywhereResults(term, function(results) ---@diagnostic disable-line: undefined-global
+            for _, result in pairs(results) do
+                handleResult(result, true);
+            end
+
+            self.pending = nil;
+        end);
+    else
+        -- manual scan
+        for containerIndex = BACKPACK_CONTAINER, NUM_BAG_SLOTS do
+            for slotIndex = 1, C_Container.GetContainerNumSlots(containerIndex) do
+                local item = Item:CreateFromBagAndSlot(containerIndex, slotIndex);
+                if not item:IsItemEmpty() then
+                    item:ContinueOnItemLoad(function()
+                        local containerInfo = C_Container.GetContainerItemInfo(containerIndex, slotIndex);
+                        --- @type SyndicatorSearchResult
+                        local result = {
+                            itemLink = item:GetItemLink(),
+                            itemID = item:GetItemID(),
+                            isBound = containerInfo.isBound,
+                            source = {
+                                container = 'bag',
+                                character = playerFullName,
+                            },
+                            quality = item:GetItemQuality(),
+                        };
+                        handleResult(result, true);
+                    end);
+                end
+            end
+        end
+        local invSlots = CopyTable(TUM.data.constants.catalystSlots);
+        invSlots[Enum.InventoryType.IndexWeaponmainhandType] = INVSLOT_MAINHAND;
+        invSlots[Enum.InventoryType.IndexWeaponoffhandType] = INVSLOT_OFFHAND;
+        for _, inventorySlotID in pairs(invSlots) do
+            local item = Item:CreateFromEquipmentSlot(inventorySlotID);
+            item:ContinueOnItemLoad(function()
+                --- @type SyndicatorSearchResult
+                local result = {
+                    itemLink = item:GetItemLink(),
+                    itemID = item:GetItemID(),
+                    isBound = true,
+                    source = {
+                        container = 'equipped',
+                        character = playerFullName,
+                    },
+                    quality = item:GetItemQuality(),
+                };
+                handleResult(result, true);
             end);
         end
         self.pending = nil;

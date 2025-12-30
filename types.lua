@@ -17,6 +17,8 @@
 --- @field requiresCatalyse boolean
 --- @field itemLink string
 --- @field location string
+--- @field locationCharacter string
+--- @field locationContainer string
 --- @field upgradeLevel number # upgrade track level, 1-6/8
 --- @field maxUpgradeLevel number # 6 or 8
 --- @field distance number # 0 = same character, 100+ = warband bank, 1000 = different character.
@@ -46,3 +48,26 @@
 --- @class SyndicatorCharacterDetails
 --- @field class number # classID
 --- @field className ClassFile
+
+--- @param label string # User facing text string describing this corner option.
+--- @param id string unique value to be used internally for the settings
+--- @param onUpdate fun(cornerFrame: Region, itemDetails: BaganatorItemDetails): boolean|nil
+---  Function to update the frame placed in the corner.
+---  Return true to cause this corner's visual to show.
+---  Return false to indicate no visual will be shown.
+---  Return nil to indicate the item information needed to make the display determination isn't available yet.
+--- @param onInit fun(itemButton: Frame): Region
+---  Called once for each item icon to create the frame to show in the icon corner.
+---  Return the frame to be positioned in the corner.
+---  This frame will be hidden/shown/have its parent changed to control visiblity.
+---  It may have the fields padding (number, multiplier for the padding used from the icon's corner) and sizeFont (boolean sets the font size for a font string to the user configured size)
+--- @param defaultPosition nil|{corner: BaganatorCornerWidgetCorner, priority: number}
+---  corner: string (top_left, top_right, bottom_left, bottom_right)
+---  priority: number (priority for the corner to be placed at in the corner sort order)
+function Baganator.API.RegisterCornerWidget(label, id, onUpdate, onInit, defaultPosition) end
+
+--- @alias BaganatorCornerWidgetCorner "top_left" | "top_right" | "bottom_left" | "bottom_right"
+
+--- @class BaganatorItemDetails
+--- @field itemLink string
+--- @field itemID number

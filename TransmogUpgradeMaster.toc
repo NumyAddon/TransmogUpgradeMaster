@@ -8,7 +8,7 @@
 ## IconTexture: Interface\Addons\TransmogUpgradeMaster\media\icon
 ## Version: @project-version@
 ## SavedVariables: TransmogUpgradeMasterDB, TransmogUpgradeMasterCacheDB
-## OptionalDeps: Syndicator,BlizzMove
+## OptionalDeps: Syndicator,Baganator,BlizzMove
 
 ## AddonCompartmentFunc: TransmogUpgradeMaster_OnAddonCompartmentClick
 ## AddonCompartmentFuncOnEnter: TransmogUpgradeMaster_OnAddonCompartmentEnter

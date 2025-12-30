@@ -22,6 +22,7 @@ local BONUS_ID_OFFSET = 13
 local ITEM_UPGRADE_TOOLTIP_PATTERN = ITEM_UPGRADE_TOOLTIP_FORMAT_STRING:gsub('%%d', '(%%d+)'):gsub('%%s', '(.-)');
 local CATALYST_MARKUP = CreateAtlasMarkup('CreationCatalyst-32x32', 18, 18)
 local UPGRADE_MARKUP = CreateAtlasMarkup('CovenantSanctum-Upgrade-Icon-Available', 18, 18)
+local CATALYST_UPGRADE_MARKUP = CreateSimpleTextureMarkup([[Interface\AddOns\TransmogUpgradeMaster\media\CatalystUpgrade.png]], 18, 18)
 local OK_MARKUP = "|TInterface\\RaidFrame\\ReadyCheck-Ready:0|t"
 local NOK_MARKUP = "|TInterface\\RaidFrame\\ReadyCheck-NotReady:0|t"
 local OTHER_MARKUP = CreateAtlasMarkup('QuestRepeatableTurnin', 16, 16)
@@ -93,6 +94,12 @@ EventUtil.ContinueOnAddOnLoaded(name, function()
 
         TUM.UI:ToggleUI();
     end
+
+    if NumyProfiler then
+        TUM.HandleTooltip = NumyProfiler:Wrap(name, "Core", "HandleTooltip", TUM.HandleTooltip);
+        NumyProfiler:WrapModules(name, "API", TransmogUpgradeMaster_API);
+    end
+    TUM:RegisterIntoBaganator();
 end)
 
 do
@@ -586,7 +593,7 @@ function TUM:HandleTooltip(tooltip, tooltipData)
             else
                 self:AddTooltipLine(
                     tooltip,
-                    CATALYST_MARKUP .. ' Catalyst & ' .. UPGRADE_MARKUP .. ' Upgrade appearance',
+                    CATALYST_UPGRADE_MARKUP .. ' Catalyst & Upgrade appearance',
                     not result.catalystUpgradeAppearanceMissing,
                     result.catalystUpgradeAppearanceLearnedFromOtherItem
                 )
@@ -633,7 +640,7 @@ function TUM:HandleTooltip(tooltip, tooltipData)
                 table.insert(classNames, classIDToName[classID])
             end
             tooltip:AddDoubleLine(
-                CATALYST_MARKUP .. ' Catalyst & ' .. UPGRADE_MARKUP .. ' Upgrade missing for',
+                CATALYST_UPGRADE_MARKUP .. ' Catalyst & Upgrade missing for',
                 table.concat(classNames, ', ')
             )
         end
@@ -776,4 +783,87 @@ function TUM:HandleCatalystInteraction()
     then
         ItemInteractionFrame:CompleteItemInteraction()
     end
+end
+
+function TUM:RegisterIntoBaganator()
+    if not C_AddOns.IsAddOnLoaded("Baganator") or not Baganator or not Baganator.API then return; end
+
+    local function setUpgrade(icon)
+        icon:SetAtlas('CovenantSanctum-Upgrade-Icon-Available');
+
+        return true;
+    end
+    local function setCatalyst(icon)
+        icon:SetAtlas('CreationCatalyst-32x32');
+
+        return true;
+    end
+    local function setCatalystUpgrade(icon)
+        icon:SetTexture([[Interface\AddOns\TransmogUpgradeMaster\media\CatalystUpgrade_black.png]]);
+
+        return true;
+    end
+    local function returnFalse() return false; end
+    local cache = {};
+
+    --- @param icon Texture
+    --- @param itemDetails BaganatorItemDetails
+    --- @return boolean? shouldDisplay # return nil if not enough info is known
+    local function onUpdate(icon, itemDetails)
+        if cache[itemDetails.itemLink] ~= nil then
+            return cache[itemDetails.itemLink](icon);
+        end
+
+        if not C_Item.IsItemDataCachedByID(itemDetails.itemID) then
+            C_Item.RequestLoadItemDataByID(itemDetails.itemID);
+
+            return;
+        end
+        if not self:IsCacheWarmedUp() then return; end
+
+        local results = self:IsAppearanceMissing(itemDetails.itemLink);
+
+        local catalyse, upgrade = false, false;
+        if results.canCatalyse and results.catalystAppearanceMissing then
+            catalyse = true;
+        end
+        if results.canUpgrade and results.upgradeAppearanceMissing then
+            upgrade = true;
+        end
+        if results.canUpgrade and results.catalystUpgradeAppearanceMissing then
+            catalyse = true;
+            upgrade = true;
+        end
+
+        if catalyse and upgrade then
+            cache[itemDetails.itemLink] = setCatalystUpgrade;
+        elseif catalyse then
+            cache[itemDetails.itemLink] = setCatalyst;
+        elseif upgrade then
+            cache[itemDetails.itemLink] = setUpgrade;
+        else
+            cache[itemDetails.itemLink] = returnFalse;
+        end
+
+        return cache[itemDetails.itemLink](icon);
+    end
+    if NumyProfiler then
+        onUpdate = NumyProfiler:Wrap(name, 'Core', 'BaganatorCornerWidget_OnUpdate', onUpdate);
+    end
+
+    Baganator.API.RegisterCornerWidget(
+        "Transmog Upgrade Master",
+        "TransmogUpgradeMaster",
+        onUpdate,
+        function(itemButton)
+            local tex = itemButton:CreateTexture(nil, "OVERLAY");
+            tex:SetSize(12, 12);
+
+            return tex;
+        end,
+        { corner = "bottom_right", priority = 1 }
+    )
+    EventRegistry:RegisterFrameEventAndCallback("TRANSMOG_COLLECTION_UPDATED", function()
+        cache = {};
+    end);
 end
