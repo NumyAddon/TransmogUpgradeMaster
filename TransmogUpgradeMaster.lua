@@ -20,16 +20,19 @@ local LEARNED_FROM_OTHER_ITEM = 'learnedFromOtherItem'
 
 local BONUS_ID_OFFSET = 13
 local ITEM_UPGRADE_TOOLTIP_PATTERN = ITEM_UPGRADE_TOOLTIP_FORMAT_STRING:gsub('%%d', '(%%d+)'):gsub('%%s', '(.-)');
-local CATALYST_MARKUP = CreateAtlasMarkup('CreationCatalyst-32x32', 18, 18)
-local UPGRADE_MARKUP = CreateAtlasMarkup('CovenantSanctum-Upgrade-Icon-Available', 18, 18)
-local CATALYST_UPGRADE_MARKUP = CreateSimpleTextureMarkup([[Interface\AddOns\TransmogUpgradeMaster\media\CatalystUpgrade.png]], 18, 18)
-local OK_MARKUP = "|TInterface\\RaidFrame\\ReadyCheck-Ready:0|t"
-local NOK_MARKUP = "|TInterface\\RaidFrame\\ReadyCheck-NotReady:0|t"
-local OTHER_MARKUP = CreateAtlasMarkup('QuestRepeatableTurnin', 16, 16)
+local CATALYST_ATLAS = 'CreationCatalyst-32x32';
+local UPGRADE_ATLAS = 'CovenantSanctum-Upgrade-Icon-Available';
+local CATALYST_UPGRADE_TEXTURE = [[Interface\AddOns\TransmogUpgradeMaster\media\CatalystUpgrade.png]];
+local CATALYST_MARKUP = CreateAtlasMarkup(CATALYST_ATLAS, 18, 18);
+local UPGRADE_MARKUP = CreateAtlasMarkup(UPGRADE_ATLAS, 18, 18);
+local CATALYST_UPGRADE_MARKUP = CreateSimpleTextureMarkup(CATALYST_UPGRADE_TEXTURE, 18, 18);
+local OK_MARKUP = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]];
+local NOK_MARKUP = [[|TInterface\RaidFrame\ReadyCheck-NotReady:0|t]];
+local OTHER_MARKUP = CreateAtlasMarkup('QuestRepeatableTurnin', 16, 16);
 
-local playerClassID = select(3, UnitClass("player"))
+local playerClassID = select(3, UnitClass("player"));
 
-local classIDToName = {}
+local classIDToName = {};
 do
     for classID = 1, GetNumClasses() do
         local className, classFile = GetClassInfo(classID);
@@ -789,17 +792,17 @@ function TUM:RegisterIntoBaganator()
     if not C_AddOns.IsAddOnLoaded("Baganator") or not Baganator or not Baganator.API then return; end
 
     local function setUpgrade(icon)
-        icon:SetAtlas('CovenantSanctum-Upgrade-Icon-Available');
+        icon:SetAtlas(UPGRADE_ATLAS);
 
         return true;
     end
     local function setCatalyst(icon)
-        icon:SetAtlas('CreationCatalyst-32x32');
+        icon:SetAtlas(CATALYST_ATLAS);
 
         return true;
     end
     local function setCatalystUpgrade(icon)
-        icon:SetTexture([[Interface\AddOns\TransmogUpgradeMaster\media\CatalystUpgrade_black.png]]);
+        icon:SetTexture(CATALYST_UPGRADE_TEXTURE);
 
         return true;
     end
@@ -810,6 +813,8 @@ function TUM:RegisterIntoBaganator()
     --- @param itemDetails BaganatorItemDetails
     --- @return boolean? shouldDisplay # return nil if not enough info is known
     local function onUpdate(icon, itemDetails)
+        local size = self.db.baganatorIconSize;
+        icon:SetSize(size, size);
         if cache[itemDetails.itemLink] ~= nil then
             return cache[itemDetails.itemLink](icon);
         end
@@ -857,7 +862,8 @@ function TUM:RegisterIntoBaganator()
         onUpdate,
         function(itemButton)
             local tex = itemButton:CreateTexture(nil, "OVERLAY");
-            tex:SetSize(12, 12);
+            local size = self.db.baganatorIconSize;
+            tex:SetSize(size, size);
 
             return tex;
         end,

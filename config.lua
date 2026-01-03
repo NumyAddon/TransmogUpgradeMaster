@@ -32,6 +32,7 @@ TUM_Config.settingKeys = {
     showWarbandCatalystInfoModifierKey = "showWarbandCatalystInfoModifierKey",
     warbandCatalystClassList = "warbandCatalystClassList",
     autoConfirmCatalyst = "autoConfirmCatalyst",
+    baganatorIconSize = "baganatorIconSize",
     debug = "debug",
 };
 
@@ -58,6 +59,8 @@ function TUM_Config:Init()
         warbandCatalystClassList = {},
         --- @type TUM_Config_AutoConfirmCatalystOptions
         autoConfirmCatalyst = self.autoConfirmCatalystOptions.previousSeason,
+        --- @type number
+        baganatorIconSize = 15,
         --- @type boolean
         UI_treatOtherItemAsCollected = false,
         --- @type boolean
@@ -154,6 +157,20 @@ function TUM_Config:Init()
 
 
         Config:MakeHeader("Other Settings");
+        local sliderOptions = Settings.CreateSliderOptions(5, 30, 0.5);
+        sliderOptions:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(val) return ("%.1f"):format(val); end);
+        local initializer, setting = Config:MakeSlider(
+            "Baganator Icon Size",
+            self.settingKeys.baganatorIconSize,
+            "Adjust the size of the icon shown in Baganator. Use Baganator's settings to adjust the position of the icon.",
+            sliderOptions
+        );
+        initializer:AddModifyPredicate(function() return C_AddOns.IsAddOnLoaded("Baganator") and Baganator and Baganator.API and true or false; end);
+        setting:SetValueChangedCallback(function()
+            if Baganator and Baganator.API then
+                Baganator.API.RequestItemButtonsRefresh()
+            end
+        end);
         Config:MakeDropdown(
             "Auto Confirm Catalyst",
             self.settingKeys.autoConfirmCatalyst,
