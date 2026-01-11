@@ -85,7 +85,7 @@ function TUM_Config:Init()
         end
     end
 
-    Config:Init("Transmog Upgrade Master", self.db, defaults);
+    Config:Init("Transmog Upgrade Master", "TransmogUpgradeMaster", self.db, defaults);
 
     do
         local showModifierOptions = {
