@@ -3,6 +3,7 @@ local name = ...;
 local ns = select(2, ...);
 
 local isMidnight = select(4, GetBuildInfo()) >= 120000;
+local issecretvalue = issecretvalue or function(val) return false; end;
 
 --- @class TransmogUpgradeMaster
 local TUM = {}
@@ -14,6 +15,8 @@ ns.core = TUM
 
 TUM.data = ns.data
 TUM.Config = ns.TUM_Config
+
+local constants = TUM.data.constants
 
 --- @alias TUM_LearnedFromOtherItem "learnedFromOtherItem"
 local LEARNED_FROM_OTHER_ITEM = 'learnedFromOtherItem'
@@ -132,7 +135,7 @@ end
 
 ---@param classID number
 ---@param seasonID number?
----@return nil | { [1]: number, [2]: number, [3]: number, [4]: number } # lfrSetID, normalSetID, heroicSetID, mythicSetID
+---@return nil | { [TUM_Tier]: number } # [tier] = setID
 function TUM:GetSetsForClass(classID, seasonID)
     return self.sets[seasonID or self.currentSeason] and self.sets[seasonID or self.currentSeason][classID] or nil;
 end
@@ -183,7 +186,7 @@ function TUM:InitItemSourceMap()
                 local appearanceSources = C_TransmogCollection.GetAppearanceSources(info.visualID)
                 if appearanceSources then
                     for _, sourceInfo in ipairs(appearanceSources) do
-                        local tier = self.data.constants.itemModIDTiers[sourceInfo.itemModID] or nil
+                        local tier = constants.itemModIDTiers[sourceInfo.itemModID] or nil
                         if tier then
                             itemSourceIDs[sourceInfo.itemID] = itemSourceIDs[sourceInfo.itemID] or {}
                             itemSourceIDs[sourceInfo.itemID][tier] = sourceInfo.sourceID
@@ -228,7 +231,7 @@ function TUM:GetTokenInfo(itemID, itemLink, tooltipData)
     local _, data = LinkUtil.ExtractLink(itemLink)
     local parts = strsplittable(':', data)
     local itemCreationContext = tonumber(parts[12])
-    local tier = self.data.constants.itemContextTiers[itemCreationContext] or self:GetTooltipDifficultyTier(itemLink, tooltipData)
+    local tier = constants.itemContextTiers[itemCreationContext] or self:GetTooltipDifficultyTier(itemLink, tooltipData)
 
     return {
         season = tokenInfo.season,
@@ -246,14 +249,14 @@ function TUM:GetTooltipDifficultyTier(itemLink, tooltipData)
     local line2Text = tooltipData and tooltipData.lines[2] and tooltipData.lines[2].leftText or nil
     if not line2Text then return nil end
 
-    for tier, difficultyString in pairs(self.data.constants.difficultyTierStrings) do
+    for tier, difficultyString in pairs(constants.difficultyTierStrings) do
         if line2Text == difficultyString then
             return tier
         end
     end
 
     -- default to normal
-    return self.data.constants.tiers.normal
+    return constants.tiers.normal
 end
 
 --- doesn't return season information for catalysed items from previous seasons, but that's fine, since nothing can be done with those items anyway
@@ -310,7 +313,7 @@ function TUM:IsConquestPvpItem(itemLink)
     end
     local sourceInfo = C_TransmogCollection.GetSourceInfo(sourceID)
 
-    return sourceInfo and sourceInfo.itemModID == self.data.constants.conquestItemModID or false
+    return sourceInfo and sourceInfo.itemModID == constants.conquestItemModID or false
 end
 
 --- @param itemLink string
@@ -318,7 +321,7 @@ end
 function TUM:CanSendItemToAlt(itemLink, tooltipData)
     local binding = self:GetItemBinding(itemLink, tooltipData)
 
-    return binding and self.data.constants.mailableBindings[binding] or false
+    return binding and constants.mailableBindings[binding] or false
 end
 
 --- @param itemLink string
@@ -417,7 +420,8 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines, tooltipData)
     local canUpgrade = upgradeInfo and self:IsCurrentSeasonItem(itemLink)
     local seasonID = self:GetItemSeason(itemLink)
     context.seasonID = seasonID
-    tryInsert(debugLines, 'seasonID: ' .. tostring(seasonID))
+    local seasonName = constants.seasonNames[seasonID] or nil
+    tryInsert(debugLines, ('seasonID: %s%s'):format(tostring(seasonID), seasonName and (' (%s)'):format(seasonName) or ''))
     if not upgradeInfo and not seasonID then
         tryInsert(debugLines, 'not upgradable and no seasonID')
 
@@ -426,15 +430,16 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines, tooltipData)
 
     local currentTier = 0;
     if upgradeInfo and upgradeInfo.currentLevel > 0 then
-        currentTier = self.data.constants.trackStringIDToTiers[upgradeInfo.trackStringID] or 0
-        if currentTier and upgradeInfo.currentLevel >= 5 and currentTier < 4 then
+        local breakpoint = constants.upgradeTransmogBreakpoints[seasonID or self.currentSeason];
+        currentTier = constants.trackStringIDToTiers[upgradeInfo.trackStringID] or 0
+        if currentTier and upgradeInfo.currentLevel >= breakpoint and currentTier < constants.tiers.mythic then
             currentTier = currentTier + 1
         end
-        if canUpgrade and upgradeInfo.currentLevel < 5 and currentTier < 4 then
+        if canUpgrade and upgradeInfo.currentLevel < breakpoint and currentTier < constants.tiers.mythic then
             result.canUpgrade = true
         end
     else
-        currentTier = self:GetTierFromUpgradeTrackBonusID(itemLink) or 0
+        currentTier = self:GetTierFromUpgradeTrackBonusID(itemLink, seasonID) or 0
     end
     local _, sourceID = C_TransmogCollection.GetItemInfo(itemLink)
     tryInsert(debugLines, 'sourceID: ' .. tostring(sourceID))
@@ -569,7 +574,7 @@ end
 --- @param tooltipData TooltipData
 function TUM:HandleTooltip(tooltip, tooltipData)
     local itemLink = select(2, TooltipUtil.GetDisplayedItem(tooltip))
-    if not itemLink then return end
+    if not itemLink or issecretvalue(itemLink) then return end
 
     local debugLines = {}
     local result = self:IsAppearanceMissing(itemLink, nil, debugLines, tooltipData)
@@ -677,16 +682,21 @@ function TUM:GetSourceIDsForItemID(itemID)
 end
 
 --- @param itemLink string
+--- @param seasonID TUM_Season
 --- @return TUM_Tier? tier # nil if the tier cannot be determined from itemlink
-function TUM:GetTierFromUpgradeTrackBonusID(itemLink)
+function TUM:GetTierFromUpgradeTrackBonusID(itemLink, seasonID)
     local _, data = LinkUtil.ExtractLink(itemLink);
     local parts = strsplittable(':', data);
 
+    local upgradeTrackBonusIDs = constants.upgradeTrackBonusIDs;
     local numBonusIDs = tonumber(parts[BONUS_ID_OFFSET]) or 0;
     for index = (BONUS_ID_OFFSET + 1), (BONUS_ID_OFFSET + numBonusIDs) do
         local bonusID = tonumber(parts[index]);
-        if self.data.constants.upgradeTrackBonusIDs[bonusID] then
-            return self.data.constants.upgradeTrackBonusIDs[bonusID];
+        local bonusIDInfo = upgradeTrackBonusIDs[bonusID];
+        if bonusIDInfo then
+            local breakpoint = constants.upgradeTransmogBreakpoints[seasonID];
+
+            return bonusIDInfo.level < breakpoint and bonusIDInfo.tier or math.min(constants.tiers.mythic, bonusIDInfo.tier + 1);
         end
     end
 end
@@ -697,12 +707,11 @@ end
 function TUM:IsValidArmorTypeForClass(itemLink, classID)
     local invType, _, itemClassID, itemSubClassID = select(4, C_Item.GetItemInfoInstant(itemLink))
 
-    return invType == "INVTYPE_CLOAK"
-        or (itemClassID == Enum.ItemClass.Armor and itemSubClassID == self.data.constants.classArmorTypeMap[classID])
+    return invType == "INVTYPE_CLOAK" or (itemClassID == Enum.ItemClass.Armor and itemSubClassID == constants.classArmorTypeMap[classID])
 end
 
 function TUM:IsCatalystSlot(slot)
-    return self.data.constants.catalystSlots[slot] or false
+    return constants.catalystSlots[slot] or false
 end
 
 function TUM:IsItemCatalysed(itemID)

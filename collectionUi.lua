@@ -4,20 +4,10 @@ local ns = select(2, ...);
 
 local TUM = ns.core;
 local data = TUM.data;
+local constants = data.constants;
 
 local isSyndicatorLoaded = C_AddOns.IsAddOnLoaded('Syndicator');
 
-local SEASON_NAMES = {
-    [data.constants.seasons.SL_S4] = 'SL S4',
-    [data.constants.seasons.DF_S1] = 'DF S1',
-    [data.constants.seasons.DF_S2] = 'DF S2',
-    [data.constants.seasons.DF_S3] = 'DF S3',
-    [data.constants.seasons.DF_S4] = 'DF S4',
-    [data.constants.seasons.TWW_S1] = 'TWW S1',
-    [data.constants.seasons.TWW_S2] = 'TWW S2',
-    [data.constants.seasons.TWW_S3] = 'TWW S3',
-    [data.constants.seasons.MN_S1] = 'MN S1',
-};
 local CATALYST_MARKUP = CreateAtlasMarkup('CreationCatalyst-32x32', 18, 18)
 local UPGRADE_MARKUP = CreateAtlasMarkup('CovenantSanctum-Upgrade-Icon-Available', 18, 18)
 local CATALYST_UPGRADE_MARKUP = CreateSimpleTextureMarkup([[Interface\AddOns\TransmogUpgradeMaster\media\CatalystUpgrade.png]], 18, 18)
@@ -57,13 +47,13 @@ end
 
 function UI:InitSeason(currentSeasonID)
     self.selectedSeason = currentSeasonID;
-    for seasonID, _ in pairs(SEASON_NAMES) do
+    for seasonID, _ in pairs(constants.seasonNames) do
         if seasonID > UI.selectedSeason then
-            SEASON_NAMES[seasonID] = nil;
+            constants.seasonNames[seasonID] = nil;
         end
     end
 
-    self.currentCurrencyID = TUM.data.currency[currentSeasonID] or 0;
+    self.currentCurrencyID = data.currency[currentSeasonID] or 0;
     self.Currency:UpdateText();
 end
 
@@ -229,13 +219,13 @@ function UI:BuildUI()
         --- @param rootDescription RootMenuDescriptionProxy
         seasonDropdown:SetupMenu(function(_, rootDescription)
             local orderedSeasonIDs = {};
-            for seasonID, _ in pairs(SEASON_NAMES) do
+            for seasonID, _ in pairs(constants.seasonNames) do
                 table.insert(orderedSeasonIDs, seasonID);
             end
             table.sort(orderedSeasonIDs);
             for _, seasonID in ipairs(orderedSeasonIDs) do
                 rootDescription:CreateRadio(
-                    SEASON_NAMES[seasonID],
+                    constants.seasonNames[seasonID],
                     isSelected,
                     setSelected,
                     seasonID
@@ -313,25 +303,25 @@ function UI:BuildUI()
                 title = PLAYER_DIFFICULTY3, -- LFR
                 width = COLUMN_WIDTH,
                 parentKey = 'Lfr',
-                tier = TUM.data.constants.tiers.lfr,
+                tier = constants.tiers.lfr,
             },
             {
                 title = PLAYER_DIFFICULTY1, -- Normal
                 width = COLUMN_WIDTH,
                 parentKey = 'Normal',
-                tier = TUM.data.constants.tiers.normal,
+                tier = constants.tiers.normal,
             },
             {
                 title = PLAYER_DIFFICULTY2, -- Heroic
                 width = COLUMN_WIDTH,
                 parentKey = 'Heroic',
-                tier = TUM.data.constants.tiers.heroic,
+                tier = constants.tiers.heroic,
             },
             {
                 title = PLAYER_DIFFICULTY6, -- Mythic
                 width = COLUMN_WIDTH,
                 parentKey = 'Mythic',
-                tier = TUM.data.constants.tiers.mythic,
+                tier = constants.tiers.mythic,
             },
         };
         local SLOT_ORDER = {
@@ -721,8 +711,8 @@ function UI:CreateOutfitSlashCommand(tier)
     local classID = self.selectedClass;
     local itemTransmogInfoList = TransmogUtil.GetEmptyItemTransmogInfoList();
 
-    for slotIndex, itemID in pairs(TUM.data.catalystItems[seasonID][classID]) do
-        local invSlot = TUM.data.constants.catalystSlots[slotIndex];
+    for slotIndex, itemID in pairs(data.catalystItems[seasonID][classID]) do
+        local invSlot = constants.catalystSlots[slotIndex];
         local sourceIDs = TUM:GetSourceIDsForItemID(itemID)
         if sourceIDs and sourceIDs[tier] then
             itemTransmogInfoList[invSlot] = ItemUtil.CreateItemTransmogInfo(sourceIDs[tier]);
@@ -928,7 +918,7 @@ local function buildSyndicatorSearchTerm(classID, activeSeasonOnly, includeAllIt
             tinsert(slotTerms, term);
         end
     end
-    local armorType = classID and TUM.data.constants.classArmorTypeMap[classID];
+    local armorType = classID and constants.classArmorTypeMap[classID];
 
     local searchTerms = string.format(
         '%s%s|(%s(%s))',
@@ -943,12 +933,12 @@ end
 
 local function initResults()
     local results = {};
-    for slot in pairs(TUM.data.constants.catalystSlots) do
+    for slot in pairs(constants.catalystSlots) do
         results[slot] = {
-            [TUM.data.constants.tiers.lfr] = {},
-            [TUM.data.constants.tiers.normal] = {},
-            [TUM.data.constants.tiers.heroic] = {},
-            [TUM.data.constants.tiers.mythic] = {},
+            [constants.tiers.lfr] = {},
+            [constants.tiers.normal] = {},
+            [constants.tiers.heroic] = {},
+            [constants.tiers.mythic] = {},
         };
     end
 
@@ -987,7 +977,7 @@ local function checkResult(scanResult, classID, seasonID)
     end
 
     local isItemCatalysed = TUM:IsItemCatalysed(scanResult.itemID);
-    if isItemCatalysed and TUM.data.catalystItems[seasonID][classID][itemSlot] ~= scanResult.itemID then
+    if isItemCatalysed and data.catalystItems[seasonID][classID][itemSlot] ~= scanResult.itemID then
         return;
     end
 
@@ -1202,7 +1192,7 @@ function UI:UpdateItems()
                 end
             end
         end
-        for _, inventorySlotID in pairs(TUM.data.constants.catalystSlots) do
+        for _, inventorySlotID in pairs(constants.catalystSlots) do
             local item = Item:CreateFromEquipmentSlot(inventorySlotID);
             item:ContinueOnItemLoad(function()
                 --- @type SyndicatorSearchResult
@@ -1263,7 +1253,7 @@ function TodoList:UpdateItems()
                 end
             end
         end
-        local invSlots = CopyTable(TUM.data.constants.catalystSlots);
+        local invSlots = CopyTable(constants.catalystSlots);
         invSlots[Enum.InventoryType.IndexWeaponmainhandType] = INVSLOT_MAINHAND;
         invSlots[Enum.InventoryType.IndexWeaponoffhandType] = INVSLOT_OFFHAND;
         for _, inventorySlotID in pairs(invSlots) do

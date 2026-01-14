@@ -69,6 +69,17 @@ do
         TWW_S3 = TWW_S3,
         MN_S1 = MN_S1,
     };
+    data.constants.seasonNames = {
+        [SL_S4] = 'SL S4',
+        [DF_S1] = 'DF S1',
+        [DF_S2] = 'DF S2',
+        [DF_S3] = 'DF S3',
+        [DF_S4] = 'DF S4',
+        [TWW_S1] = 'TWW S1',
+        [TWW_S2] = 'TWW S2',
+        [TWW_S3] = 'TWW S3',
+        [MN_S1] = 'MN S1',
+    };
 
     -- see https://wago.tools/db2/SharedString
     local VETERAN_TRACK_STRING_ID = 972;
@@ -82,42 +93,53 @@ do
         [MYTH_TRACK_STRING_ID] = data.constants.tiers.mythic,
     };
 
+    --- @type table<TUM_Season, number> # [seasonID] = upgrade level where the transmog changes to the next tier
+    data.constants.upgradeTransmogBreakpoints = {
+        [SL_S4] = 5,
+        [DF_S1] = 5,
+        [DF_S2] = 5,
+        [DF_S3] = 5,
+        [DF_S4] = 5,
+        [TWW_S1] = 5,
+        [TWW_S2] = 5,
+        [TWW_S3] = 5,
+        [MN_S1] = 6,
+    };
+
+    --- @type table<number, {track: TUM_Tier, level: number}> # [bonusID] = { track = TUM_Tier, level = number }
     data.constants.upgradeTrackBonusIDs = {
-        [11969] = TIER_LFR, -- Veteran 1
-        [11970] = TIER_LFR, -- Veteran 2
-        [11971] = TIER_LFR, -- Veteran 3
-        [11972] = TIER_LFR, -- Veteran 4
-
-        [11973] = TIER_NORMAL, -- Veteran 5
-        [11974] = TIER_NORMAL, -- Veteran 6
-        [11975] = TIER_NORMAL, -- Veteran 7
-        [11976] = TIER_NORMAL, -- Veteran 8
-        [11977] = TIER_NORMAL, -- Champion 1
-        [11978] = TIER_NORMAL, -- Champion 2
-        [11979] = TIER_NORMAL, -- Champion 3
-        [11980] = TIER_NORMAL, -- Champion 4
-
-        [11981] = TIER_HEROIC, -- Champion 5
-        [11982] = TIER_HEROIC, -- Champion 6
-        [11983] = TIER_HEROIC, -- Champion 7
-        [11984] = TIER_HEROIC, -- Champion 8
-        [11985] = TIER_HEROIC, -- Hero 1
-        [11986] = TIER_HEROIC, -- Hero 2
-        [11987] = TIER_HEROIC, -- Hero 3
-        [11988] = TIER_HEROIC, -- Hero 4
-
-        [11989] = TIER_MYTHIC, -- Hero 5
-        [11990] = TIER_MYTHIC, -- Hero 6
-        [12371] = TIER_MYTHIC, -- Hero 7 - only exists in some seasons
-        [12372] = TIER_MYTHIC, -- Hero 8 - only exists in some seasons
-        [11991] = TIER_MYTHIC, -- Myth 1
-        [11992] = TIER_MYTHIC, -- Myth 2
-        [11993] = TIER_MYTHIC, -- Myth 3
-        [11994] = TIER_MYTHIC, -- Myth 4
-        [11995] = TIER_MYTHIC, -- Myth 5
-        [11996] = TIER_MYTHIC, -- Myth 6
-        [12376] = TIER_MYTHIC, -- Myth 7 - only exists in some seasons
-        [12375] = TIER_MYTHIC, -- Myth 8 - only exists in some seasons
+        [11969] = { track = TIER_LFR, level = 1 }, -- Veteran 1
+        [11970] = { track = TIER_LFR, level = 2 }, -- Veteran 2
+        [11971] = { track = TIER_LFR, level = 3 }, -- Veteran 3
+        [11972] = { track = TIER_LFR, level = 4 }, -- Veteran 4
+        [11973] = { track = TIER_LFR, level = 5 }, -- Veteran 5
+        [11974] = { track = TIER_LFR, level = 6 }, -- Veteran 6
+        [11975] = { track = TIER_LFR, level = 7 }, -- Veteran 7
+        [11976] = { track = TIER_LFR, level = 8 }, -- Veteran 8
+        [11977] = { track = TIER_NORMAL, level = 1 }, -- Champion 1
+        [11978] = { track = TIER_NORMAL, level = 2 }, -- Champion 2
+        [11979] = { track = TIER_NORMAL, level = 3 }, -- Champion 3
+        [11980] = { track = TIER_NORMAL, level = 4 }, -- Champion 4
+        [11981] = { track = TIER_NORMAL, level = 5 }, -- Champion 5
+        [11982] = { track = TIER_NORMAL, level = 6 }, -- Champion 6
+        [11983] = { track = TIER_NORMAL, level = 7 }, -- Champion 7
+        [11984] = { track = TIER_NORMAL, level = 8 }, -- Champion 8
+        [11985] = { track = TIER_HEROIC, level = 1 }, -- Hero 1
+        [11986] = { track = TIER_HEROIC, level = 2 }, -- Hero 2
+        [11987] = { track = TIER_HEROIC, level = 3 }, -- Hero 3
+        [11988] = { track = TIER_HEROIC, level = 4 }, -- Hero 4
+        [11989] = { track = TIER_HEROIC, level = 5 }, -- Hero 5
+        [11990] = { track = TIER_HEROIC, level = 6 }, -- Hero 6
+        [12371] = { track = TIER_HEROIC, level = 7 }, -- Hero 7
+        [12372] = { track = TIER_HEROIC, level = 8 }, -- Hero 8
+        [11991] = { track = TIER_MYTHIC, level = 1 }, -- Myth 1
+        [11992] = { track = TIER_MYTHIC, level = 2 }, -- Myth 2
+        [11993] = { track = TIER_MYTHIC, level = 3 }, -- Myth 3
+        [11994] = { track = TIER_MYTHIC, level = 4 }, -- Myth 4
+        [11995] = { track = TIER_MYTHIC, level = 5 }, -- Myth 5
+        [11996] = { track = TIER_MYTHIC, level = 6 }, -- Myth 6
+        [12376] = { track = TIER_MYTHIC, level = 7 }, -- Myth 7
+        [12375] = { track = TIER_MYTHIC, level = 8 }, -- Myth 8
     };
 
     data.constants.conquestItemModID = 159;
@@ -190,11 +212,11 @@ end
 data.currency = {
     [TWW_S2] = 3116,
     [TWW_S3] = 3269,
-    [MN_S1] = 0, -- @todo check it
+    [MN_S1] = 3378,
 };
 
 --- could potentially be extracted from C_TransmogSets.GetAllSets() more or less, but meh, effort, and requires linking to a specific season still anyway
---- @type table<TUM_Season, table<number, {[1]:number, [2]:number, [3]:number, [4]:number}>> [m+ seasonID][classID] = { [1] = lfrSetID, [2] = normalSetID, [3] = heroicSetID, [4] = mythicSetID }
+--- @type table<TUM_Season, table<number, {[TUM_Tier]:number}>> [m+ seasonID][classID] = { [tier] = setID }
 data.sets = {
     [TWW_S2] = {
         [WARRIOR] = { 4326, 4325, 4323, 4324 },
