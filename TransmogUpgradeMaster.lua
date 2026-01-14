@@ -696,7 +696,7 @@ function TUM:GetTierFromUpgradeTrackBonusID(itemLink, seasonID)
         if bonusIDInfo then
             local breakpoint = constants.upgradeTransmogBreakpoints[seasonID];
 
-            return bonusIDInfo.level < breakpoint and bonusIDInfo.tier or math.min(constants.tiers.mythic, bonusIDInfo.tier + 1);
+            return bonusIDInfo.level < breakpoint and bonusIDInfo.track or math.min(constants.tiers.mythic, bonusIDInfo.track + 1);
         end
     end
 end
