@@ -422,7 +422,7 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines, tooltipData)
     context.seasonID = seasonID
     local seasonName = constants.seasonNames[seasonID] or nil
     tryInsert(debugLines, ('seasonID: %s%s'):format(tostring(seasonID), seasonName and (' (%s)'):format(seasonName) or ''))
-    if not upgradeInfo and not seasonID then
+    if not (upgradeInfo and upgradeInfo.currentLevel > 0) and not seasonID then
         tryInsert(debugLines, 'not upgradable and no seasonID')
 
         return result
