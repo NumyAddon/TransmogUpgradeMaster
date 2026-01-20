@@ -439,7 +439,7 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines, tooltipData)
             result.canUpgrade = true
         end
     else
-        currentTier = self:GetTierFromUpgradeTrackBonusID(itemLink, seasonID) or 0
+        currentTier = seasonID and self:GetTierFromUpgradeTrackBonusID(itemLink, seasonID) or 0
     end
     local _, sourceID = C_TransmogCollection.GetItemInfo(itemLink)
     tryInsert(debugLines, 'sourceID: ' .. tostring(sourceID))
