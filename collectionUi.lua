@@ -907,28 +907,25 @@ local SLOT_SEARCH_TERMS = {
     [Enum.InventoryType.IndexCloakType] = '#back',
 };
 
---- @param classID number?
---- @param activeSeasonOnly boolean?
---- @param includeAllItems boolean?
+--- @param classID number
 --- @return string searchTerm
-local function buildSyndicatorSearchTerm(classID, activeSeasonOnly, includeAllItems)
+local function buildSyndicatorSearchTerm(classID)
     local slotTerms = {};
     for slot, term in pairs(SLOT_SEARCH_TERMS) do
         if slot ~= Enum.InventoryType.IndexCloakType then
             tinsert(slotTerms, term);
         end
     end
-    local armorType = classID and constants.classArmorTypeMap[classID];
+    local armorType = constants.classArmorTypeMap[classID];
 
     local searchTerms = string.format(
-        '%s%s|(%s(%s))',
-        includeAllItems and '(#weapon|#shields|#off-hand)|' or '',
+        '%s|(%s&(%s))',
         SLOT_SEARCH_TERMS[Enum.InventoryType.IndexCloakType],
-        includeAllItems and '' or ('(%s)&'):format(ARMOR_SEARCH_TERMS[armorType]),
+        ARMOR_SEARCH_TERMS[armorType],
         table.concat(slotTerms, '|')
     );
 
-    return string.format('%s#epic&((%s)|#tier token)', activeSeasonOnly and '#active season&' or '', searchTerms);
+    return string.format('#epic&((%s)|#tier token)', searchTerms);
 end
 
 local function initResults()
@@ -1220,7 +1217,7 @@ function TodoList:UpdateItems()
     self.results = {};
     self.deferNewResult = true;
     if isSyndicatorLoaded then
-        local term = buildSyndicatorSearchTerm(nil, true, true);
+        local term = '#transmog upgrade';
         --- @param results SyndicatorSearchResult[]
         Syndicator.Search.RequestSearchEverywhereResults(term, function(results) ---@diagnostic disable-line: undefined-global
             for _, result in pairs(results) do
