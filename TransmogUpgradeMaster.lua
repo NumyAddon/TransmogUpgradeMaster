@@ -2,9 +2,6 @@ local name = ...;
 --- @class TUM_NS
 local ns = select(2, ...);
 
-local isMidnight = select(4, GetBuildInfo()) >= 120000;
-local issecretvalue = issecretvalue or function(val) return false; end;
-
 --- @class TransmogUpgradeMaster
 local TUM = {}
 TransmogUpgradeMaster = TUM
@@ -261,10 +258,6 @@ end
 
 --- doesn't return season information for catalysed items from previous seasons, but that's fine, since nothing can be done with those items anyway
 function TUM:GetItemSeason(itemLink)
-    if self:IsCurrentSeasonItem(itemLink) then
-        return self.currentSeason;
-    end
-
     local _, data = LinkUtil.ExtractLink(itemLink);
     local parts = strsplittable(':', data);
     local itemID = tonumber(parts[1]);
@@ -279,14 +272,18 @@ function TUM:GetItemSeason(itemLink)
         end
     end
 
+    if self:CanBeUpgraded(itemLink) then
+        -- this can be inaccurate
+        return self.currentSeason;
+    end
+
     return nil;
 end
 
---- previous season items are not (yet?) supported
+--- @todo in midnight this is somewhat incorrect. technically the items are still upgradable, but you can't actually get any valorstones to do so
 --- @param itemLink string
 --- @return boolean
-function TUM:IsCurrentSeasonItem(itemLink)
-    if isMidnight then return false end -- @todo find a better check for this
+function TUM:CanBeUpgraded(itemLink)
     local data = C_TooltipInfo.GetHyperlink(itemLink);
     for _, line in ipairs(data and data.lines or {}) do
         if line and line.leftText and line.leftText:match(ITEM_UPGRADE_TOOLTIP_PATTERN) then
@@ -417,11 +414,12 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines, tooltipData)
     tryInsert(debugLines, 'itemID: ' .. tostring(itemID))
 
     local upgradeInfo = C_Item.GetItemUpgradeInfo(itemLink)
-    local canUpgrade = upgradeInfo and self:IsCurrentSeasonItem(itemLink)
+    local canUpgrade = upgradeInfo and self:CanBeUpgraded(itemLink)
     local seasonID = self:GetItemSeason(itemLink)
     context.seasonID = seasonID
     local seasonName = constants.seasonNames[seasonID] or nil
     tryInsert(debugLines, ('seasonID: %s%s'):format(tostring(seasonID), seasonName and (' (%s)'):format(seasonName) or ''))
+    tryInsert(debugLines, ('canUpgrade: %s'):format(tostring(canUpgrade)))
     if not (upgradeInfo and upgradeInfo.currentLevel > 0) and not seasonID then
         tryInsert(debugLines, 'not upgradable and no seasonID')
 
