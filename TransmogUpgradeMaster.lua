@@ -259,7 +259,7 @@ end
 --- doesn't return season information for catalysed items from previous seasons, but that's fine, since nothing can be done with those items anyway
 function TUM:GetItemSeason(itemLink)
     local _, data = LinkUtil.ExtractLink(itemLink);
-    local parts = strsplittable(':', data);
+    local parts = data and strsplittable(':', data) or {};
     local itemID = tonumber(parts[1]);
     local tokenInfo = self.data.tokens[itemID];
     if tokenInfo then return tokenInfo.season; end
@@ -833,16 +833,16 @@ function TUM:RegisterIntoBaganator()
         end
         if not self:IsCacheWarmedUp() then return; end
 
-        local results = self:IsAppearanceMissing(itemDetails.itemLink);
+        local results = securecallfunction(self.IsAppearanceMissing, self, itemDetails.itemLink);
 
         local catalyse, upgrade = false, false;
-        if results.canCatalyse and results.catalystAppearanceMissing then
+        if results and results.canCatalyse and results.catalystAppearanceMissing then
             catalyse = true;
         end
-        if results.canUpgrade and results.upgradeAppearanceMissing then
+        if results and results.canUpgrade and results.upgradeAppearanceMissing then
             upgrade = true;
         end
-        if results.canUpgrade and results.catalystUpgradeAppearanceMissing then
+        if results and results.canUpgrade and results.catalystUpgradeAppearanceMissing then
             catalyse = true;
             upgrade = true;
         end
