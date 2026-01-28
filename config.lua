@@ -1,11 +1,10 @@
---- @class TUM_NS
+--- @class TUM_NS: NumyConfigNS
 local ns = select(2, ...);
 
 --- @class TUM_Config
 local TUM_Config = {}
 ns.TUM_Config = TUM_Config;
 
---- @type NumyConfig
 local Config = ns.Config;
 
 --- @enum TUM_Config_ModifierKeyOptions
