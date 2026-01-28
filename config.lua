@@ -203,5 +203,5 @@ function TUM_Config:Init()
 end
 
 function TUM_Config:OpenSettings()
-    ns.Config:OpenSettings();
+    Config:OpenSettings();
 end
