@@ -430,7 +430,7 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines, tooltipData)
     if upgradeInfo and upgradeInfo.currentLevel > 0 then
         local breakpoint = constants.upgradeTransmogBreakpoints[seasonID or self.currentSeason];
         currentTier = constants.trackStringIDToTiers[upgradeInfo.trackStringID] or 0
-        if currentTier and upgradeInfo.currentLevel >= breakpoint and currentTier < constants.tiers.mythic then
+        if currentTier ~= 0 and upgradeInfo.currentLevel >= breakpoint and currentTier < constants.tiers.mythic then
             currentTier = currentTier + 1
         end
         if canUpgrade and upgradeInfo.currentLevel < breakpoint and currentTier < constants.tiers.mythic then
