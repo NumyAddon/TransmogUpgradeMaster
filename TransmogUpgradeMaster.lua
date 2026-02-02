@@ -81,7 +81,7 @@ EventUtil.ContinueOnAddOnLoaded(name, function()
 
     --- @param tooltip GameTooltip
     TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, tooltipData)
-        if tooltip == GameTooltip or tooltip == GameTooltip.ItemTooltip.Tooltip then
+        if tooltip == GameTooltip or tooltip == GameTooltip.ItemTooltip.Tooltip or tooltip == ItemRefTooltip then
             TUM:HandleTooltip(tooltip, tooltipData)
         end
     end)
