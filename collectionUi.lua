@@ -360,11 +360,12 @@ function UI:BuildUI()
                     local inspectButton = CreateFrame('Button', nil, header, 'InsecureActionButtonTemplate');
                     header.InspectButton = inspectButton;
                     do
+                        inspectButton.tier = COLUMN_INFO[index].tier;
                         inspectButton:SetPoint('LEFT', text, 'RIGHT', 5, 0);
                         inspectButton:SetSize(14, 14);
                         inspectButton:SetNormalTexture(magnifyingGlassAtlas);
                         inspectButton:SetAttribute('type', 'macro');
-                        inspectButton:SetAttribute('useOnKeyDown ', true);
+                        inspectButton:SetAttribute('useOnKeyDown', true);
                         inspectButton:RegisterForClicks('AnyDown');
                         inspectButton:SetScript('OnEnter', function()
                             GameTooltip:SetOwner(inspectButton, 'ANCHOR_CURSOR_RIGHT');
@@ -388,8 +389,7 @@ function UI:BuildUI()
                                 inspectButton:SetAttribute('macrotext', '');
                                 return;
                             end
-                            local tier = COLUMN_INFO[index].tier;
-                            inspectButton:SetAttribute('macrotext', UI:CreateOutfitSlashCommand(tier));
+                            inspectButton:SetAttribute('macrotext', UI:CreateOutfitSlashCommand(inspectButton.tier));
                         end);
                     end
                 end
@@ -720,9 +720,7 @@ function UI:CreateOutfitSlashCommand(tier)
     end
     itemTransmogInfoList[INVSLOT_MAINHAND] = ItemUtil.CreateItemTransmogInfo(4231); -- Knuckleduster, smallest I could find
 
-    local func = TransmogUtil.CreateCustomSetSlashCommand or TransmogUtil.CreateOutfitSlashCommand;
-
-    return func(itemTransmogInfoList);
+    return TransmogUtil.CreateCustomSetSlashCommand(itemTransmogInfoList);
 end
 
 function UI:DeferUpdateItems()

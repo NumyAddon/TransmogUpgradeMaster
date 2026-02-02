@@ -551,7 +551,7 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines, tooltipData)
     result.canCatalyse = tokenInfo or (seasonID and not isCatalysed and not isConquestPvpItem and self:IsCatalystSlot(itemSlot) and self:IsValidArmorTypeForClass(itemLink, classID))
     if result.canCatalyse then
         --@debug@
-        if self:GuessTierFromForgedTooltip(itemLink, seasonID, classID, itemSlot) ~= currentTier then
+        if not tokenInfo and self:GuessTierFromForgedTooltip(itemLink, seasonID, classID, itemSlot) ~= currentTier then
             print('wrong tier guessed for item ', itemLink)
         end
         --@end-debug@
