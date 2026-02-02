@@ -257,6 +257,8 @@ function TUM:GetTooltipDifficultyTier(itemLink, tooltipData)
 end
 
 --- doesn't return season information for catalysed items from previous seasons, but that's fine, since nothing can be done with those items anyway
+--- @param itemLink string
+--- @return TUM_Season|nil seasonID
 function TUM:GetItemSeason(itemLink)
     local _, data = LinkUtil.ExtractLink(itemLink);
     local parts = data and strsplittable(':', data) or {};
@@ -267,8 +269,9 @@ function TUM:GetItemSeason(itemLink)
     local numBonusIDs = tonumber(parts[BONUS_ID_OFFSET]) or 0;
     for index = (BONUS_ID_OFFSET + 1), (BONUS_ID_OFFSET + numBonusIDs) do
         local bonusID = tonumber(parts[index]);
-        if self.data.catalystBonusIDMap[bonusID] then
-            return self.data.catalystBonusIDMap[bonusID];
+        local seasonID = self.data.catalystBonusIDMap[bonusID];
+        if seasonID then
+            return seasonID;
         end
     end
 
@@ -333,6 +336,25 @@ function TUM:GetItemBinding(itemLink, tooltipData)
     end
 
     return nil
+end
+
+--- @param itemLink string
+--- @param seasonID TUM_Season
+--- @param classID number
+--- @param itemSlot Enum.InventoryType
+--- @return TUM_Tier|nil tier
+function TUM:GuessTierFromForgedTooltip(itemLink, seasonID, classID, itemSlot)
+    local catalysedItemID = self.catalystItems[seasonID] and self.catalystItems[seasonID][classID] and self.catalystItems[seasonID][classID][itemSlot]
+    if not catalysedItemID then
+        return nil
+    end
+
+    local forgedLink = itemLink:gsub('item:(%d+)', 'item:' .. catalysedItemID)
+
+    local _, sourceID = C_TransmogCollection.GetItemInfo(forgedLink)
+    local sourceInfo = sourceID and C_TransmogCollection.GetSourceInfo(sourceID)
+
+    return sourceInfo and constants.itemModIDTiers[sourceInfo.itemModID] or nil
 end
 
 local modifierFunctions = {
@@ -427,17 +449,26 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines, tooltipData)
     end
 
     local currentTier = 0;
+    local tierSource = '';
     if upgradeInfo and upgradeInfo.currentLevel > 0 then
         local breakpoint = constants.upgradeTransmogBreakpoints[seasonID or self.currentSeason];
         currentTier = constants.trackStringIDToTiers[upgradeInfo.trackStringID] or 0
-        if currentTier ~= 0 and upgradeInfo.currentLevel >= breakpoint and currentTier < constants.tiers.mythic then
+        if currentTier == 0 then
+            tryInsert(debugLines, ('unsupported upgrade track: %s (%d) '):format(upgradeInfo.trackString, upgradeInfo.trackStringID))
+
+            return result;
+        end
+        tierSource = 'upgrade info'
+        if upgradeInfo.currentLevel >= breakpoint and currentTier < constants.tiers.mythic then
             currentTier = currentTier + 1
+            tierSource = 'upgrade info > breakpoint'
         end
         if canUpgrade and upgradeInfo.currentLevel < breakpoint and currentTier < constants.tiers.mythic then
             result.canUpgrade = true
         end
     else
         currentTier = seasonID and self:GetTierFromUpgradeTrackBonusID(itemLink, seasonID) or 0
+        tierSource = 'upgrade info (bonusID)'
     end
     local _, sourceID = C_TransmogCollection.GetItemInfo(itemLink)
     tryInsert(debugLines, 'sourceID: ' .. tostring(sourceID))
@@ -456,13 +487,31 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines, tooltipData)
         end
 
         currentTier = tokenInfo.tier or currentTier
+        tierSource = 'token info'
     end
+
+    local itemSlot = tokenInfo and tokenInfo.slot or C_Item.GetItemInventoryTypeByID(itemLink)
+    if itemSlot == Enum.InventoryType.IndexRobeType then
+        -- robes catalyse into chest pieces
+        itemSlot = Enum.InventoryType.IndexChestType
+    end
+    context.slot = itemSlot
 
     if currentTier == 0 then
         local sourceIDs = self:GetSourceIDsForItemID(itemID)
         local index = tIndexOf(sourceIDs or {}, sourceID)
         currentTier = index or 0
+        tierSource = 'sourceID index'
 
+        if currentTier == 0 then
+            local sourceInfo = sourceID and C_TransmogCollection.GetSourceInfo(sourceID)
+            currentTier = sourceInfo and constants.itemModIDTiers[sourceInfo.itemModID] or 0
+            tierSource = 'source itemModID'
+        end
+        if currentTier == 0 then
+            currentTier = seasonID and self:GuessTierFromForgedTooltip(itemLink, seasonID, classID, itemSlot) or 0
+            tierSource = 'tooltip shenanigans'
+        end
         if currentTier == 0 then
             tryInsert(debugLines, 'no tier info found')
 
@@ -471,13 +520,7 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines, tooltipData)
     end
     context.tier = currentTier
     tryInsert(debugLines, 'currentTier: ' .. tostring(currentTier))
-
-    local itemSlot = tokenInfo and tokenInfo.slot or C_Item.GetItemInventoryTypeByID(itemLink)
-    if itemSlot == Enum.InventoryType.IndexRobeType then
-        -- robes catalyse into chest pieces
-        itemSlot = Enum.InventoryType.IndexChestType
-    end
-    context.slot = itemSlot
+    tryInsert(debugLines, 'tierSource: ' .. tostring(tierSource))
 
     local setIDs = sourceID and C_TransmogSets.GetSetsContainingSourceID(sourceID)
     local relatedSets
@@ -498,6 +541,7 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines, tooltipData)
     -- conquest PvP items can be catalysed for set bonus and upgraded, but they keep their appearance
     local isConquestPvpItem = self:IsConquestPvpItem(itemLink)
     tryInsert(debugLines, 'isConquestPvpItem: ' .. tostring(isConquestPvpItem))
+    context.isPvpItem = isConquestPvpItem
     if isConquestPvpItem then
         result.canUpgrade = false
     end
@@ -506,6 +550,11 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines, tooltipData)
     tryInsert(debugLines, 'isCatalysed: ' .. tostring(isCatalysed))
     result.canCatalyse = tokenInfo or (seasonID and not isCatalysed and not isConquestPvpItem and self:IsCatalystSlot(itemSlot) and self:IsValidArmorTypeForClass(itemLink, classID))
     if result.canCatalyse then
+        --@debug@
+        if self:GuessTierFromForgedTooltip(itemLink, seasonID, classID, itemSlot) ~= currentTier then
+            print('wrong tier guessed for item ', itemLink)
+        end
+        --@end-debug@
         local catalystCollected, catalystUpgradeCollected
         local playerSets = self:GetSetsForClass(classID, seasonID)
         if playerSets then
@@ -576,6 +625,14 @@ function TUM:HandleTooltip(tooltip, tooltipData)
 
     local debugLines = {}
     local result = self:IsAppearanceMissing(itemLink, nil, debugLines, tooltipData)
+
+    if tooltipData.guid then
+        local itemLocation = C_Item.GetItemLocation(tooltipData.guid)
+        local isConvertable = itemLocation and C_Item.IsItemConvertibleAndValidForPlayer(itemLocation)
+        if isConvertable and not result.canCatalyse and not result.contextData.isPvpItem then
+            tooltip:AddLine("TUM Error: Item can be catalysed, but catalyst info wasn't found", 1, 0, 0, true)
+        end
+    end
 
     for _, line in ipairs(debugLines) do
         self:AddDebugLine(tooltip, line)

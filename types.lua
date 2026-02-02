@@ -41,6 +41,7 @@
 --- @field slot Enum.InventoryType?
 --- @field itemID number?
 --- @field seasonID number?
+--- @field isPvpItem boolean?
 
 --- @class SyndicatorCharacterData
 --- @field details SyndicatorCharacterDetails
