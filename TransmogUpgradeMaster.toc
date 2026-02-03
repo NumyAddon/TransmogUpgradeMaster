@@ -36,3 +36,7 @@ TransmogUpgradeMaster.lua
 api.lua
 
 collectionUi.lua
+
+#@debug@
+tests.lua
+#@end-debug@

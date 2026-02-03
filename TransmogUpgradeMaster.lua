@@ -548,7 +548,7 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines, tooltipData)
 
     local isCatalysed = self:IsItemCatalysed(itemID)
     tryInsert(debugLines, 'isCatalysed: ' .. tostring(isCatalysed))
-    result.canCatalyse = tokenInfo or (seasonID and not isCatalysed and not isConquestPvpItem and self:IsCatalystSlot(itemSlot) and self:IsValidArmorTypeForClass(itemLink, classID))
+    result.canCatalyse = not not (tokenInfo or (seasonID and not isCatalysed and not isConquestPvpItem and self:IsCatalystSlot(itemSlot) and self:IsValidArmorTypeForClass(itemLink, classID)))
     if result.canCatalyse then
         --@debug@
         if not tokenInfo and self:GuessTierFromForgedTooltip(itemLink, seasonID, classID, itemSlot) ~= currentTier then

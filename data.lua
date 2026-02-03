@@ -47,10 +47,11 @@ local EVOKER = 13;
 local isMidnight = select(4, GetBuildInfo()) >= 120000;
 data.currentSeason = isMidnight and MN_S1 or TWW_S3;
 
-data.constants = {};
+local constants = {};
+data.constants = constants;
 do
     --- @enum TUM_Tier
-    data.constants.tiers = {
+    constants.tiers = {
         lfr = TIER_LFR,
         normal = TIER_NORMAL,
         heroic = TIER_HEROIC,
@@ -58,7 +59,7 @@ do
     };
 
     --- @enum TUM_Season
-    data.constants.seasons = {
+    constants.seasons = {
         SL_S4 = SL_S4,
         DF_S1 = DF_S1,
         DF_S2 = DF_S2,
@@ -69,7 +70,7 @@ do
         TWW_S3 = TWW_S3,
         MN_S1 = MN_S1,
     };
-    data.constants.seasonNames = {
+    constants.seasonNames = {
         [SL_S4] = 'SL S4',
         [DF_S1] = 'DF S1',
         [DF_S2] = 'DF S2',
@@ -81,20 +82,36 @@ do
         [MN_S1] = 'MN S1',
     };
 
+    constants.classes = {
+        WARRIOR = WARRIOR,
+        PALADIN = PALADIN,
+        HUNTER = HUNTER,
+        ROGUE = ROGUE,
+        PRIEST = PRIEST,
+        DEATHKNIGHT = DEATHKNIGHT,
+        SHAMAN = SHAMAN,
+        MAGE = MAGE,
+        WARLOCK = WARLOCK,
+        MONK = MONK,
+        DRUID = DRUID,
+        DEMONHUNTER = DEMONHUNTER,
+        EVOKER = EVOKER,
+    };
+
     -- see https://wago.tools/db2/SharedString
     local VETERAN_TRACK_STRING_ID = 972;
     local CHAMPION_TRACK_STRING_ID = 973;
     local HERO_TRACK_STRING_ID = 974;
     local MYTH_TRACK_STRING_ID = 978;
-    data.constants.trackStringIDToTiers = {
-        [VETERAN_TRACK_STRING_ID] = data.constants.tiers.lfr,
-        [CHAMPION_TRACK_STRING_ID] = data.constants.tiers.normal,
-        [HERO_TRACK_STRING_ID] = data.constants.tiers.heroic,
-        [MYTH_TRACK_STRING_ID] = data.constants.tiers.mythic,
+    constants.trackStringIDToTiers = {
+        [VETERAN_TRACK_STRING_ID] = TIER_LFR,
+        [CHAMPION_TRACK_STRING_ID] = TIER_NORMAL,
+        [HERO_TRACK_STRING_ID] = TIER_HEROIC,
+        [MYTH_TRACK_STRING_ID] = TIER_MYTHIC,
     };
 
     --- @type table<TUM_Season, number> # [seasonID] = upgrade level where the transmog changes to the next tier
-    data.constants.upgradeTransmogBreakpoints = {
+    constants.upgradeTransmogBreakpoints = {
         [SL_S4] = 5,
         [DF_S1] = 5,
         [DF_S2] = 5,
@@ -107,7 +124,7 @@ do
     };
 
     --- @type table<number, {track: TUM_Tier, level: number}> # [bonusID] = { track = TUM_Tier, level = number }
-    data.constants.upgradeTrackBonusIDs = {
+    constants.upgradeTrackBonusIDs = {
         [11969] = { track = TIER_LFR, level = 1 }, -- Veteran 1
         [11970] = { track = TIER_LFR, level = 2 }, -- Veteran 2
         [11971] = { track = TIER_LFR, level = 3 }, -- Veteran 3
@@ -142,34 +159,34 @@ do
         [12375] = { track = TIER_MYTHIC, level = 8 }, -- Myth 8
     };
 
-    data.constants.conquestItemModID = 159;
-    data.constants.itemModIDTiers = {
-        [4] = data.constants.tiers.lfr,
-        [0] = data.constants.tiers.normal,
-        [1] = data.constants.tiers.heroic,
-        [3] = data.constants.tiers.mythic,
+    constants.conquestItemModID = 159;
+    constants.itemModIDTiers = {
+        [4] = TIER_LFR,
+        [0] = TIER_NORMAL,
+        [1] = TIER_HEROIC,
+        [3] = TIER_MYTHIC,
     };
 
     local difficultyTierFormat = "|cFF 0FF 0%s|r"; -- no idea why the color is formatted this way..
-    data.constants.difficultyTierStrings = {
-        [data.constants.tiers.lfr] = difficultyTierFormat:format(PLAYER_DIFFICULTY3),
-        [data.constants.tiers.normal] = difficultyTierFormat:format(PLAYER_DIFFICULTY1), -- usually the line is just absent instead
-        [data.constants.tiers.heroic] = difficultyTierFormat:format(PLAYER_DIFFICULTY2),
-        [data.constants.tiers.mythic] = difficultyTierFormat:format(PLAYER_DIFFICULTY6),
+    constants.difficultyTierStrings = {
+        [TIER_LFR] = difficultyTierFormat:format(PLAYER_DIFFICULTY3),
+        [TIER_NORMAL] = difficultyTierFormat:format(PLAYER_DIFFICULTY1), -- usually the line is just absent instead
+        [TIER_HEROIC] = difficultyTierFormat:format(PLAYER_DIFFICULTY2),
+        [TIER_MYTHIC] = difficultyTierFormat:format(PLAYER_DIFFICULTY6),
     };
 
-    data.constants.itemContextTiers = {
-        [Enum.ItemCreationContext.RaidFinder] = data.constants.tiers.lfr,
-        [Enum.ItemCreationContext.RaidNormal] = data.constants.tiers.normal,
-        [Enum.ItemCreationContext.RaidHeroic] = data.constants.tiers.heroic,
-        [Enum.ItemCreationContext.RaidMythic] = data.constants.tiers.mythic,
+    constants.itemContextTiers = {
+        [Enum.ItemCreationContext.RaidFinder] = TIER_LFR,
+        [Enum.ItemCreationContext.RaidNormal] = TIER_NORMAL,
+        [Enum.ItemCreationContext.RaidHeroic] = TIER_HEROIC,
+        [Enum.ItemCreationContext.RaidMythic] = TIER_MYTHIC,
     };
 
     local CLOTH = Enum.ItemArmorSubclass.Cloth;
     local LEATHER = Enum.ItemArmorSubclass.Leather;
     local MAIL = Enum.ItemArmorSubclass.Mail;
     local PLATE = Enum.ItemArmorSubclass.Plate;
-    data.constants.classArmorTypeMap = {
+    constants.classArmorTypeMap = {
         [WARRIOR] = PLATE,
         [PALADIN] = PLATE,
         [HUNTER] = MAIL,
@@ -185,26 +202,28 @@ do
         [EVOKER] = MAIL,
     };
 
-    data.constants.catalystSlots = {
-        [Enum.InventoryType.IndexHeadType] = INVSLOT_HEAD,
-        [Enum.InventoryType.IndexShoulderType] = INVSLOT_SHOULDER,
-        [Enum.InventoryType.IndexChestType] = INVSLOT_CHEST,
-        [Enum.InventoryType.IndexWaistType] = INVSLOT_WAIST,
-        [Enum.InventoryType.IndexLegsType] = INVSLOT_LEGS,
-        [Enum.InventoryType.IndexFeetType] = INVSLOT_FEET,
-        [Enum.InventoryType.IndexWristType] = INVSLOT_WRIST,
-        [Enum.InventoryType.IndexHandType] = INVSLOT_HAND,
-        [Enum.InventoryType.IndexCloakType] = INVSLOT_BACK,
+    local Enum_InvType = Enum.InventoryType;
+    constants.catalystSlots = {
+        [Enum_InvType.IndexHeadType] = INVSLOT_HEAD,
+        [Enum_InvType.IndexShoulderType] = INVSLOT_SHOULDER,
+        [Enum_InvType.IndexChestType] = INVSLOT_CHEST,
+        [Enum_InvType.IndexWaistType] = INVSLOT_WAIST,
+        [Enum_InvType.IndexLegsType] = INVSLOT_LEGS,
+        [Enum_InvType.IndexFeetType] = INVSLOT_FEET,
+        [Enum_InvType.IndexWristType] = INVSLOT_WRIST,
+        [Enum_InvType.IndexHandType] = INVSLOT_HAND,
+        [Enum_InvType.IndexCloakType] = INVSLOT_BACK,
     };
 
-    data.constants.mailableBindings = {
-        [Enum.TooltipDataItemBinding.Account] = true,
-        [Enum.TooltipDataItemBinding.AccountUntilEquipped] = true,
-        [Enum.TooltipDataItemBinding.BindOnEquip] = true,
-        [Enum.TooltipDataItemBinding.BindOnUse] = true,
-        [Enum.TooltipDataItemBinding.BindToAccount] = true,
-        [Enum.TooltipDataItemBinding.BindToAccountUntilEquipped] = true,
-        [Enum.TooltipDataItemBinding.BindToBnetAccount] = true,
+    local Enum_TooltipDataItemBinding = Enum.TooltipDataItemBinding;
+    constants.mailableBindings = {
+        [Enum_TooltipDataItemBinding.Account] = true,
+        [Enum_TooltipDataItemBinding.AccountUntilEquipped] = true,
+        [Enum_TooltipDataItemBinding.BindOnEquip] = true,
+        [Enum_TooltipDataItemBinding.BindOnUse] = true,
+        [Enum_TooltipDataItemBinding.BindToAccount] = true,
+        [Enum_TooltipDataItemBinding.BindToAccountUntilEquipped] = true,
+        [Enum_TooltipDataItemBinding.BindToBnetAccount] = true,
     };
 end
 
