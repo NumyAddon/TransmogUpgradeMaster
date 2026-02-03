@@ -630,7 +630,10 @@ function TUM:HandleTooltip(tooltip, tooltipData)
 
     if tooltipData.guid then
         local itemLocation = C_Item.GetItemLocation(tooltipData.guid)
-        local isConvertable = itemLocation and C_Item.IsItemConvertibleAndValidForPlayer(itemLocation)
+        local isConvertable = itemLocation
+            and itemLocation:HasAnyLocation()
+            and itemLocation:IsValid()
+            and C_Item.IsItemConvertibleAndValidForPlayer(itemLocation)
         if isConvertable and not result.canCatalyse and not result.contextData.isPvpItem then
             tooltip:AddLine("TUM Error: Item can be catalysed, but catalyst info wasn't found", 1, 0, 0, true)
         end
