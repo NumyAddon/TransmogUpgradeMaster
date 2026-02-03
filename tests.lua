@@ -70,6 +70,15 @@ local tests = {
             isPvpItem = true,
         },
     },
+    primalInfused = {
+        link = "|cnIQ4:|Hitem:200421::::::::71:66::14:5:6652:8943:9343:7937:1468::::::|h|Virtuous Silver Bracers]|h|r",
+        classID = constants.classes.MONK,
+        expected = {
+            seasonID = nil,
+            tier = nil,
+            canCatalyse = false,
+        },
+    },
 };
 
 local function runTests()
@@ -126,7 +135,7 @@ end
 
 local ticker;
 ticker = C_Timer.NewTicker(0.5, function()
-    if TUM:IsCacheWarmedUp() then
+    if TUM:IsCacheWarmedUp() and TUM.seasonInitialized then
         ticker:Cancel();
         runTests();
     end

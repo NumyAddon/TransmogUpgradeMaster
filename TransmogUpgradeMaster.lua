@@ -59,6 +59,7 @@ EventUtil.ContinueOnAddOnLoaded(name, function()
             and currentSeason
             or TUM.data.currentSeason;
         TUM.UI:InitSeason(TUM.currentSeason);
+        TUM.seasonInitialized = true;
     else
         RunNextFrame(function()
             C_MythicPlus.RequestMapInfo();
@@ -69,6 +70,7 @@ EventUtil.ContinueOnAddOnLoaded(name, function()
                 and currentSeason
                 or TUM.data.currentSeason;
             TUM.UI:InitSeason(TUM.currentSeason);
+            TUM.seasonInitialized = true;
         end);
     end
 
