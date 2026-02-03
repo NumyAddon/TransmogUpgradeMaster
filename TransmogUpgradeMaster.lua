@@ -454,7 +454,7 @@ function TUM:IsAppearanceMissing(itemLink, classID, debugLines, tooltipData)
         local breakpoint = constants.upgradeTransmogBreakpoints[seasonID or self.currentSeason];
         currentTier = constants.trackStringIDToTiers[upgradeInfo.trackStringID] or 0
         if currentTier == 0 then
-            tryInsert(debugLines, ('unsupported upgrade track: %s (%d) '):format(upgradeInfo.trackString, upgradeInfo.trackStringID))
+            tryInsert(debugLines, ('unsupported upgrade track: %s (%d) '):format(tostring(upgradeInfo.trackString), tostring(upgradeInfo.trackStringID)))
 
             return result;
         end
