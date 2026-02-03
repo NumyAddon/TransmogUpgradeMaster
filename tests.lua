@@ -89,22 +89,25 @@ local function runTests()
             local item = Item:CreateFromItemLink(test.link);
             item:ContinueOnItemLoad(function()
                 completedTests = completedTests + 1;
-                local results = securecallfunction(TUM.IsAppearanceMissing, TUM, test.link, test.classID);
-                local contextData = results and results.contextData;
-                local actual = {
-                    seasonID = contextData and contextData.seasonID or nil,
-                    tier = contextData and contextData.tier or nil,
-                    canCatalyse = results and results.canCatalyse or false,
-                    isPvpItem = contextData and contextData.isPvpItem or false,
-                };
-                local testFailed = false;
+                local ok, results = xpcall(TUM.IsAppearanceMissing, CallErrorHandler, TUM, test.link, test.classID);
 
-                for key, expectedValue in pairs(test.expected) do
-                    local actualValue = actual[key];
-                    if actualValue ~= expectedValue then
-                        testFailed = true;
-                        anyFailed = true;
-                        print("Test", testKey, "-", key, "failed. Expected'", expectedValue, "', got'", actualValue, "'. Link:", test.link);
+                if ok then
+                    local contextData = results and results.contextData;
+                    local actual = {
+                        seasonID = contextData and contextData.seasonID or nil,
+                        tier = contextData and contextData.tier or nil,
+                        canCatalyse = results and results.canCatalyse or false,
+                        isPvpItem = contextData and contextData.isPvpItem or false,
+                    };
+                    local testFailed = false;
+
+                    for key, expectedValue in pairs(test.expected) do
+                        local actualValue = actual[key];
+                        if actualValue ~= expectedValue then
+                            testFailed = true;
+                            anyFailed = true;
+                            print("Test", testKey, "-", key, "failed. Expected'", expectedValue, "', got'", actualValue, "'. Link:", test.link);
+                        end
                     end
                     if testFailed and DevTool and DevTool.AddData then
                         DevTool:AddData({
@@ -115,6 +118,9 @@ local function runTests()
                             results = results,
                         }, "TUM Test Failure");
                     end
+                else
+                    anyFailed = true;
+                    print("Test", testKey, "errored. Link:", test.link);
                 end
             end);
         end
