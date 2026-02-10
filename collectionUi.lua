@@ -498,6 +498,9 @@ function UI:BuildUI()
         currency:SetPoint('BOTTOMLEFT', self, 'BOTTOMLEFT', 15, 5);
         currency:SetSize(200, 20);
         currency:RegisterEvent('CURRENCY_DISPLAY_UPDATE');
+        currency:SetScript('OnShow', function()
+            currency:UpdateText();
+        end);
         currency:SetScript('OnEvent', function(_, event, currencyID)
             if event == 'CURRENCY_DISPLAY_UPDATE' and currencyID == self.currentCurrencyID then
                 currency:UpdateText();
