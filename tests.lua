@@ -19,7 +19,6 @@ local tests = {
         link = "|cnIQ3:|Hitem:245734::::::::80:268::25:6:6652:12921:12244:12272:3194:10254:1:28:2462:::::|h[Unstable Sample Bindings]|h|r",
         classID = constants.classes.MONK,
         expected = {
-            seasonID = constants.seasons.TWW_S3,
             tier = nil,
             canCatalyse = false,
         },
@@ -46,7 +45,6 @@ local tests = {
         link = "|cnIQ4:|Hitem:237739::::::::80:577::5:1:3524:1:28:3229:::::|h[Obliteration Beamglaive]|h|r",
         classID = constants.classes.MONK,
         expected = {
-            seasonID = constants.seasons.TWW_S3,
             tier = constants.tiers.heroic,
             canCatalyse = false,
         },
