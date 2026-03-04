@@ -42,7 +42,7 @@ local tests = {
         },
     },
     weapon = {
-        link = "|cnIQ4:|Hitem:237739::::::::80:577::5:1:3524:1:28:3229:::::|h[Obliteration Beamglaive]|h|r",
+        link = "|cnIQ4:|Hitem:249278::::::::80:577::5:1:3524:1:28:3606:::::|h[Alnscorned Spire]|h|r",
         classID = constants.classes.MONK,
         expected = {
             tier = constants.tiers.heroic,
