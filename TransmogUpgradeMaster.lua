@@ -100,9 +100,9 @@ EventUtil.ContinueOnAddOnLoaded(name, function()
         TUM.UI:ToggleUI();
     end
 
-    if NumyProfiler then
-        TUM.HandleTooltip = NumyProfiler:Wrap(name, "Core", "HandleTooltip", TUM.HandleTooltip);
-        NumyProfiler:WrapModules(name, "API", TransmogUpgradeMaster_API);
+    if NumyFunctionProfiler then
+        NumyFunctionProfiler:WrapInPlace(name, "Core", TUM, "HandleTooltip");
+        NumyFunctionProfiler:WrapModules(name, "API", TransmogUpgradeMaster_API);
     end
     TUM:RegisterIntoBaganator();
 end)
@@ -921,8 +921,8 @@ function TUM:RegisterIntoBaganator()
 
         return cache[itemDetails.itemLink](icon);
     end
-    if NumyProfiler then
-        onUpdate = NumyProfiler:Wrap(name, 'Core', 'BaganatorCornerWidget_OnUpdate', onUpdate);
+    if NumyFunctionProfiler then
+        onUpdate = NumyFunctionProfiler:Wrap(name, 'Core', 'BaganatorCornerWidget_OnUpdate', onUpdate);
     end
 
     Baganator.API.RegisterCornerWidget(
