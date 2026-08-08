@@ -2,7 +2,7 @@
 local ns = select(2, ...);
 
 local TUM = ns.core;
-local data = TUM.data;
+local data = ns.data;
 local constants = data.constants;
 
 local tests = {
@@ -42,7 +42,10 @@ local tests = {
         },
     },
     weapon = {
-        link = "|cnIQ4:|Hitem:249278::::::::80:577::5:1:3524:1:28:3606:::::|h[Alnscorned Spire]|h|r",
+        seasonLink = {
+            [constants.seasons.MN_S1] = "|cnIQ4:|Hitem:249278::::::::80:577::5:1:3524:1:28:3606:::::|h[Alnscorned Spire]|h|r",
+            [constants.seasons.MN_S2] = "|cnIQ4:|Hitem:268215::::::::90:255::5:1:3524:1:28:7363:::::|h[Abyssal Broodfiend's Bardiche]|h|r",
+        },
         classID = constants.classes.MONK,
         expected = {
             tier = constants.tiers.heroic,
@@ -84,43 +87,50 @@ local function runTests()
         local completedTests = 0;
         local anyFailed = false;
         for testKey, test in pairs(tests) do
-            local item = Item:CreateFromItemLink(test.link);
-            item:ContinueOnItemLoad(function()
+            local link = test.link or test.seasonLink[TUM.currentSeason];
+            if not link then
                 completedTests = completedTests + 1;
-                local ok, results = xpcall(TUM.IsAppearanceMissing, CallErrorHandler, TUM, test.link, test.classID);
+                anyFailed = true;
+                print("Test", testKey, "failed. No link setup for seasonID", TUM.currentSeason);
+            else
+                local item = Item:CreateFromItemLink(link);
+                item:ContinueOnItemLoad(function()
+                    completedTests = completedTests + 1;
+                    local ok, results = xpcall(TUM.IsAppearanceMissing, CallErrorHandler, TUM, link, test.classID);
 
-                if ok then
-                    local contextData = results and results.contextData;
-                    local actual = {
-                        seasonID = contextData and contextData.seasonID or nil,
-                        tier = contextData and contextData.tier or nil,
-                        canCatalyse = results and results.canCatalyse or false,
-                        isPvpItem = contextData and contextData.isPvpItem or false,
-                    };
-                    local testFailed = false;
+                    if ok then
+                        local contextData = results and results.contextData;
+                        local actual = {
+                            seasonID = contextData and contextData.seasonID or nil,
+                            tier = contextData and contextData.tier or nil,
+                            canCatalyse = results and results.canCatalyse or false,
+                            isPvpItem = contextData and contextData.isPvpItem or false,
+                        };
+                        local testFailed = false;
 
-                    for key, expectedValue in pairs(test.expected) do
-                        local actualValue = actual[key];
-                        if actualValue ~= expectedValue then
-                            testFailed = true;
-                            anyFailed = true;
-                            print("Test", testKey, "-", key, "failed. Expected'", expectedValue, "', got'", actualValue, "'. Link:", test.link);
+                        for key, expectedValue in pairs(test.expected) do
+                            local actualValue = actual[key];
+                            if actualValue ~= expectedValue then
+                                testFailed = true;
+                                anyFailed = true;
+                                print("Test", testKey, "-", key, "failed. Expected'", expectedValue, "', got'", actualValue, "'. Link:", link);
+                            end
                         end
+                        if testFailed and DevTool and DevTool.AddData then
+                            DevTool:AddData({
+                                testIndex = testKey,
+                                itemLink = link,
+                                expected = test.expected,
+                                actual = actual,
+                                results = results,
+                            }, "TUM Test Failure");
+                        end
+                    else
+                        anyFailed = true;
+                        print("Test", testKey, "errored. Link:", link);
                     end
-                    if testFailed and DevTool and DevTool.AddData then
-                        DevTool:AddData({
-                            testIndex = testKey,
-                            itemLink = test.link,
-                            expected = test.expected,
-                            actual = actual,
-                            results = results,
-                        }, "TUM Test Failure");
-                    end
-                else
-                    anyFailed = true;
-                    print("Test", testKey, "errored. Link:", test.link);
-                end
-            end);
+                end);
+            end
         end
 
         local ticker;
