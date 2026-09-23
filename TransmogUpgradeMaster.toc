@@ -5,6 +5,8 @@
 ## Title: Transmog Upgrade Master
 ## Notes: Shows whether you can learn a new appearance by upgrading or catalysing an item.
 ## Author: Numy
+## X-GameType: [Game]
+## X-GameFamily: [Family]
 ## IconTexture: Interface\Addons\TransmogUpgradeMaster\media\icon
 ## Version: @project-version@
 ## SavedVariables: TransmogUpgradeMasterDB, TransmogUpgradeMasterCacheDB
